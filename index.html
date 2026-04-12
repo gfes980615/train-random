@@ -232,9 +232,44 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
 /* responsive */
 @media(max-width:800px){
-  #app{flex-direction:column}
-  #panel{width:100%;height:55vh;min-width:0}
-  #map-wrap{height:45vh}
+  body{overflow:auto;height:auto}
+  #app{flex-direction:column;height:auto;min-height:100vh}
+  #panel{width:100%;min-width:0;height:auto;max-height:none;
+    border-right:none;border-bottom:1px solid #334155}
+  #map-wrap{height:40vh;min-height:280px;position:sticky;bottom:0}
+
+  .panel-header{padding:16px 16px 6px}
+  .panel-header h1{font-size:1.3rem}
+  .panel-header p{font-size:.75rem;margin-top:3px}
+
+  .stats{gap:8px;padding:6px 12px;font-size:.7rem}
+  .stats span{padding:3px 8px}
+
+  .slot-wrap{padding:8px 16px;gap:10px}
+  .slot-window{height:140px}
+  .slot-item{height:35px;font-size:1rem}
+  .slot-item.highlight{font-size:1.3rem}
+
+  .result-card{padding:14px;min-height:80px}
+  .result-card .station-name{font-size:1.5rem}
+  .result-card .station-meta{font-size:.8rem}
+
+  .info-panel{max-height:none;padding:0}
+  .info-card{padding:8px 12px;gap:10px}
+  .info-card .card-emoji{font-size:1.3rem;width:32px;height:32px;border-radius:8px}
+  .info-card .card-text{font-size:.78rem}
+  .info-section-title{font-size:.72rem}
+
+  .controls{padding:10px 16px 16px;gap:8px}
+  .btn-draw{padding:14px;font-size:1rem;letter-spacing:1px}
+  .count-row label{font-size:.8rem}
+  .count-row select{padding:5px 10px;font-size:.85rem}
+
+  .history{padding:0 16px 12px;max-height:70px}
+  .history-tag{font-size:.7rem;padding:2px 8px}
+
+  .countdown-num{font-size:5rem}
+  .countdown-num.go{font-size:3.5rem}
 }
 </style>
 </head>
@@ -623,7 +658,8 @@ const slotWindow = document.getElementById('slotWindow');
 const slotTrack  = document.getElementById('slotTrack');
 const resultCard = document.getElementById('resultCard');
 const btnDraw    = document.getElementById('btnDraw');
-const ITEM_H = 50;
+const isMobile = window.matchMedia('(max-width:800px)').matches;
+const ITEM_H = isMobile ? 35 : 50;
 
 let isSpinning = false;
 let history = [];
@@ -641,7 +677,8 @@ function buildTrack() {
     div.dataset.index = i;
     slotTrack.appendChild(div);
   });
-  slotTrack.style.transform = 'translateY(75px)';
+  const initOffset = isMobile ? 52 : 75;
+  slotTrack.style.transform = 'translateY(' + initOffset + 'px)';
   return pool;
 }
 
@@ -683,10 +720,11 @@ async function startDraw() {
     startMapFlicker();
     playDrumRoll();
 
-    const targetY = 75 - landIndex * ITEM_H;
-    const duration = 3500 + Math.random() * 500;
+    const baseOffset = isMobile ? 52 : 75;
+    const targetY = baseOffset - landIndex * ITEM_H;
+    const duration = isMobile ? (2800 + Math.random() * 400) : (3500 + Math.random() * 500);
     const startTime = performance.now();
-    const startY = 75;
+    const startY = baseOffset;
     let lastTickItem = -1;
 
     function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
@@ -747,6 +785,12 @@ async function startDraw() {
           } else {
             const bounds = L.latLngBounds(winners.map(w => [w.lat, w.lng]));
             map.flyToBounds(bounds.pad(0.3), { duration: 1.5 });
+          }
+          // mobile: scroll to map
+          if (isMobile) {
+            setTimeout(() => {
+              document.getElementById('map-wrap').scrollIntoView({ behavior: 'smooth' });
+            }, 400);
           }
           isSpinning = false;
           btnDraw.disabled = false;

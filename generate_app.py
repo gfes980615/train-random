@@ -156,6 +156,582 @@ COORDS = {
     "花蓮港": (23.9790, 121.6150),
 }
 
+# ---------------------------------------------------------------------------
+# 車站附近美食與景點  { 站名: { "food": [...], "sight": [...] } }
+# ---------------------------------------------------------------------------
+STATION_INFO = {
+    # ===== 縱貫線北段 =====
+    "三坑": {
+        "food": ["三坑老街米粉湯", "基隆廟口鄰近小吃", "三坑在地排骨飯"],
+        "sight": ["三坑老街散步", "基隆河畔自行車道", "獅球嶺隧道"]
+    },
+    "百福": {
+        "food": ["百福社區麵店", "七堵咖哩飯", "七堵鐵路便當"],
+        "sight": ["百福公園", "瑪陵坑溪生態", "七堵鐵道紀念公園"]
+    },
+    "暖暖": {
+        "food": ["暖暖老街小吃", "暖暖碳烤三明治", "阿嬌老店切仔麵"],
+        "sight": ["暖暖親水公園", "暖東峽谷步道", "西勢水庫"]
+    },
+    "海科館": {
+        "food": ["八斗子海鮮餐廳", "漁港現炸天婦羅", "小卷米粉"],
+        "sight": ["國立海洋科技博物館", "潮境公園", "望幽谷步道"]
+    },
+    "八斗子": {
+        "food": ["八斗子漁港海鮮", "飛魚卵香腸", "鬼頭刀魚排"],
+        "sight": ["八斗子車站海景月台", "望幽谷", "潮境公園巨型掃把裝置藝術"]
+    },
+    "五堵": {
+        "food": ["汐止老街肉羹", "五堵在地麵攤", "北港鹹粥"],
+        "sight": ["星光橋", "新山夢湖步道", "五堵隧道自行車道"]
+    },
+    "汐科": {
+        "food": ["汐科商圈便當街", "韓式料理聚集區", "遠雄百貨美食街"],
+        "sight": ["遠雄購物中心", "基隆河自行車道", "白雲公園"]
+    },
+    "浮洲": {
+        "food": ["板橋湳雅夜市", "浮洲圓環豆花", "在地越南河粉"],
+        "sight": ["浮洲藝術河濱公園", "板橋435藝文特區", "溪北公園"]
+    },
+    "南樹林": {
+        "food": ["樹林興仁花園夜市", "紅燒鰻魚羹", "樹林肉圓"],
+        "sight": ["鹿角溪人工溼地", "山佳百年車站步行可達", "大同山登山步道"]
+    },
+    "山佳": {
+        "food": ["山佳車站旁古早味冰店", "樹林排骨酥麵", "山佳老街碗粿"],
+        "sight": ["山佳百年車站（古蹟）", "大棟山觀景台", "鹿角溪人工溼地"]
+    },
+    "鳳鳴": {
+        "food": ["鶯歌老街伴手禮", "厚道飲食店古早味便當", "阿婆壽司"],
+        "sight": ["鶯歌陶瓷博物館", "鶯歌老街", "三鶯藝術村"]
+    },
+    "內壢": {
+        "food": ["內壢黃昏市場小吃", "阿霞粉圓冰", "內壢火車站旁滷肉飯"],
+        "sight": ["元智大學校園", "忠孝公園", "內壢老街區"]
+    },
+    "埔心": {
+        "food": ["埔心牧場旁餐廳", "客家粄條", "楊梅富岡老街小吃"],
+        "sight": ["埔心牧場", "楊梅故事館", "秀才登山步道"]
+    },
+    "富岡": {
+        "food": ["富岡老街客家菜包", "富岡市場油飯", "客家鹹豬肉"],
+        "sight": ["富岡老街日式建築群", "伯公岡公園", "富岡運動公園"]
+    },
+    "新富": {
+        "food": ["富岡老街碗粿", "客家粢粑", "在地客家小炒"],
+        "sight": ["新富車站田園風光", "湖口老街（鄰近）", "新豐紅毛港"]
+    },
+    "北湖": {
+        "food": ["湖口老街手工麵線", "湖口大鍋牛肉麵", "客家擂茶"],
+        "sight": ["湖口老街", "湖口好客文創園區", "金獅寺步道"]
+    },
+    # ===== 內灣線 =====
+    "竹中": {
+        "food": ["竹東客家粄條", "中央市場米粉", "客家菜包"],
+        "sight": ["竹中車站鐵道風光", "高鐵新竹站（六家線轉乘）", "頭前溪生態"]
+    },
+    "六家": {
+        "food": ["高鐵站區美食街", "竹北光明商圈小吃", "新竹米粉"],
+        "sight": ["高鐵新竹站", "六家古厝群", "竹北水圳森林公園"]
+    },
+    "上員": {
+        "food": ["竹東市場客家菜", "上員在地麵店", "客家草仔粿"],
+        "sight": ["上員崎頂步道", "頭前溪自行車道", "竹東圳"]
+    },
+    "榮華": {
+        "food": ["竹東中央市場小吃", "客家鹹湯圓", "薑絲大腸"],
+        "sight": ["竹東動漫園區", "蕭如松藝術園區", "五指山登山口"]
+    },
+    "竹東": {
+        "food": ["竹東中央市場粄條", "竹東排骨酥麵", "客家菜包阿金姐"],
+        "sight": ["竹東文創藝術村", "蕭如松藝術園區", "軟橋彩繪村"]
+    },
+    "橫山": {
+        "food": ["橫山在地客家小吃", "野薑花粽子", "客家擂茶"],
+        "sight": ["大山背人文生態館", "騎龍古道", "橫山大山背休閒農業區"]
+    },
+    "九讚頭": {
+        "food": ["內灣野薑花粽", "客家鹹湯圓", "山產野菜"],
+        "sight": ["九讚頭文化協會", "內灣老街（鄰近）", "合興愛情車站（鄰近）"]
+    },
+    "合興": {
+        "food": ["合興車站旁愛情飲品店", "內灣老街粄條", "野薑花粽"],
+        "sight": ["合興愛情車站", "薰衣草森林（鄰近）", "愛情候車亭裝置藝術"]
+    },
+    "富貴": {
+        "food": ["內灣客家菜", "山豬肉香腸", "客家擂茶"],
+        "sight": ["富貴車站山林風光", "內灣吊橋（鄰近）", "油羅溪谷"]
+    },
+    "內灣": {
+        "food": ["內灣老街野薑花粽", "客家粄條", "劉興欽漫畫餐廳"],
+        "sight": ["內灣老街", "內灣吊橋", "內灣戲院（懷舊電影院）"]
+    },
+    "北新竹": {
+        "food": ["新竹城隍廟口肉圓", "鴨肉許", "新竹米粉"],
+        "sight": ["新竹護城河親水公園", "新竹美術館", "東門城"]
+    },
+    "千甲": {
+        "food": ["千甲部落農產品", "在地原住民風味餐", "新竹客家美食"],
+        "sight": ["千甲聚落（里山生活）", "世博台灣館", "關東橋商圈"]
+    },
+    "新莊": {
+        "food": ["新竹關東橋小吃", "清大夜市", "科學園區便當街"],
+        "sight": ["新竹科學園區", "交通大學校園", "十八尖山步道"]
+    },
+    "三姓橋": {
+        "food": ["新竹南寮漁港海鮮", "香山甕仔雞", "三姓橋在地小吃"],
+        "sight": ["香山濕地賞蟹步道", "南寮漁港", "青青草原溜滑梯"]
+    },
+    "香山": {
+        "food": ["香山甕仔雞", "海鮮快炒", "香山市場在地小吃"],
+        "sight": ["香山濕地", "青青草原", "香山天后宮"]
+    },
+    "崎頂": {
+        "food": ["崎頂小吃攤", "竹南在地米粉", "竹南市場花枝羹"],
+        "sight": ["崎頂子母隧道", "崎頂觀景台看海", "崎頂海水浴場"]
+    },
+    # ===== 海岸線 =====
+    "談文": {
+        "food": ["談文在地小吃", "後龍黑輪伯", "後龍杏仁露"],
+        "sight": ["談文車站（木造老站房）", "好望角風景區（鄰近）", "談文溪口"]
+    },
+    "大山": {
+        "food": ["後龍小吃", "客家米食", "在地花生糖"],
+        "sight": ["大山車站（日式木造站房）", "後龍好望角", "過港貝化石層"]
+    },
+    "龍港": {
+        "food": ["後龍海鮮", "龍港漁村小吃", "外埔漁港海產"],
+        "sight": ["好望角觀景步道", "外埔漁港", "後龍鎮海宮"]
+    },
+    "新埔": {
+        "food": ["通霄海鮮快炒", "白沙屯媽祖廟旁小吃", "手工豆花"],
+        "sight": ["新埔車站（木造老站）", "秋茂園", "通霄海水浴場"]
+    },
+    "豐富": {
+        "food": ["苗栗客家湯圓", "苗栗市場肉圓", "苗栗餡餅"],
+        "sight": ["客家圓樓", "苗栗高鐵站區", "貓裏客家學苑"]
+    },
+    "南勢": {
+        "food": ["苗栗市場小吃", "客家粄條", "苗栗肉圓"],
+        "sight": ["功維敘隧道（七彩燈光）", "南勢溪步道", "貓貍山公園"]
+    },
+    "泰安": {
+        "food": ["泰安舊站附近客家餐廳", "后里豬血湯", "后里馬場旁小吃"],
+        "sight": ["泰安舊站鐵道文化園區", "泰安櫻花林（季節限定）", "后豐鐵馬道"]
+    },
+    "日南": {
+        "food": ["大甲芋頭酥", "日南在地麵攤", "大甲奶油酥餅"],
+        "sight": ["日南車站（國定古蹟）", "日南海堤夕陽", "大甲鎮瀾宮（鄰近）"]
+    },
+    "臺中港": {
+        "food": ["梧棲漁港海鮮", "梧棲老街鹹蛋糕", "漁港現撈快炒"],
+        "sight": ["梧棲漁港觀光魚市", "高美濕地（鄰近）", "三井OUTLET"]
+    },
+    "龍井": {
+        "food": ["東海雞爪凍", "東海藝術街小吃", "龍井在地肉圓"],
+        "sight": ["麗水漁港", "龍井大排壁畫", "磺溪書院"]
+    },
+    "栗林": {
+        "food": ["豐原廟東夜市小吃", "豐原太平洋鹹酥雞", "排骨麵"],
+        "sight": ["栗林車站新站體", "葫蘆墩公園", "豐原慈濟宮"]
+    },
+    "頭家厝": {
+        "food": ["潭子臭豆腐", "潭子在地麵攤", "豐原廟東小吃"],
+        "sight": ["潭雅神綠園道自行車道", "摘星山莊古厝", "潭子運動公園"]
+    },
+    "松竹": {
+        "food": ["北屯大坑芋圓", "松竹路越南美食", "舊社公園旁小吃"],
+        "sight": ["大坑步道群", "北屯兒童公園", "松竹捷運站（台鐵捷運共構）"]
+    },
+    "太原": {
+        "food": ["太原夜市小吃", "旱溪臭豆腐", "大坑竹筍大餐"],
+        "sight": ["旱溪夜市（鄰近）", "太原綠園道", "大坑步道"]
+    },
+    "精武": {
+        "food": ["台中肉圓（精武路）", "台中第二市場老賴紅茶", "麻葉茶館"],
+        "sight": ["台中公園", "一中商圈", "台中放送局"]
+    },
+    "五權": {
+        "food": ["台中第五市場蚵仔粥", "樂群街蒸餃", "美村路小吃"],
+        "sight": ["國立台灣美術館", "草悟道", "審計新村文創園區"]
+    },
+    "大慶": {
+        "food": ["大慶夜市小吃", "忠孝路夜市", "南區米糕"],
+        "sight": ["中興大學校園", "健康公園", "台中文化創意產業園區"]
+    },
+    "烏日": {
+        "food": ["烏日啤酒廠香腸", "知高圳步道旁在地小吃", "烏日市場肉羹"],
+        "sight": ["台灣啤酒觀光工廠", "知高圳步道", "烏日聚奎居（歷史建築）"]
+    },
+    # ===== 縱貫線南段 =====
+    "花壇": {
+        "food": ["花壇肉羹", "花壇在地爌肉飯", "茉莉花茶"],
+        "sight": ["花壇八卦山大佛（鄰近）", "花壇虎山巖", "茉莉花壇夢想館"]
+    },
+    "大村": {
+        "food": ["大村葡萄（季節限定）", "大村當歸鴨", "進昌咖啡烘焙館"],
+        "sight": ["大村葡萄隧道", "進昌咖啡烘焙館（巴洛克建築）", "平和社區賞花"]
+    },
+    "永靖": {
+        "food": ["永靖市場米糕", "員林蜜餞", "永靖在地炸粿"],
+        "sight": ["成美文化園", "余三館古厝", "永靖公學校宿舍"]
+    },
+    "源泉": {
+        "food": ["二水在地爌肉飯", "龍眼乾", "田中在地小吃"],
+        "sight": ["源泉車站（小站風情）", "八堡圳取水口", "二水自行車道"]
+    },
+    "濁水": {
+        "food": ["集集山蕉蛋捲", "濁水在地小吃", "集集火車站便當"],
+        "sight": ["濁水車站", "集集綠色隧道", "武昌宮地震紀念館"]
+    },
+    "龍泉": {
+        "food": ["集集山蕉甜點", "集集老街小吃", "在地竹筍料理"],
+        "sight": ["龍泉車站旁綠色隧道", "集集攔河堰", "明新書院"]
+    },
+    "集集": {
+        "food": ["集集火車站前香蕉蛋捲", "集集老街臭豆腐", "山蕉冰淇淋"],
+        "sight": ["集集車站（木造站房）", "集集綠色隧道", "特有生物中心"]
+    },
+    "水里": {
+        "food": ["水里肉圓", "水里二坪枝仔冰", "水里蛇窯旁餐廳"],
+        "sight": ["水里蛇窯", "二坪枝仔冰", "水里溪步道"]
+    },
+    "車埕": {
+        "food": ["車埕老街木桶便當", "梅子酒", "車埕在地野菜料理"],
+        "sight": ["車埕木業展示館", "車埕老街", "明潭水庫壩頂"]
+    },
+    "石榴": {
+        "food": ["斗六西市場肉圓", "斗六炊仔飯", "石榴在地麵攤"],
+        "sight": ["石榴車站（百年老站）", "斗六人文公園", "雲中街生活聚落"]
+    },
+    "石龜": {
+        "food": ["斗南米糕", "斗南炸粿", "在地鵝肉"],
+        "sight": ["石龜溪生態", "他里霧文化園區（斗南）", "石龜車站風光"]
+    },
+    "水上": {
+        "food": ["嘉義雞肉飯", "嘉義涼麵涼圓", "水上在地豆花"],
+        "sight": ["北回歸線太陽館", "白人牙膏觀光工廠", "南靖糖廠"]
+    },
+    "南靖": {
+        "food": ["南靖糖廠冰品", "嘉義火雞肉飯", "南靖車站旁小吃"],
+        "sight": ["南靖糖廠", "南靖車站日式站房", "嘉義蒜頭糖廠（鄰近）"]
+    },
+    "嘉北": {
+        "food": ["嘉義文化路夜市", "嘉義噴水雞肉飯", "御香屋葡萄柚綠茶"],
+        "sight": ["嘉義文化路商圈", "森林之歌裝置藝術", "嘉義公園"]
+    },
+    "後壁": {
+        "food": ["後壁古早味割稻飯", "後壁冰糖醬鴨", "無米樂社區農家餐"],
+        "sight": ["無米樂社區（菁寮老街）", "後壁土溝農村美術館", "墨林文物館"]
+    },
+    "柳營": {
+        "food": ["柳營牛奶鍋", "柳營鮮奶酪", "在地牛肉湯"],
+        "sight": ["柳營酪農區", "德元埤荷蘭村", "劉啟祥美術紀念館"]
+    },
+    "林鳳營": {
+        "food": ["林鳳營鮮乳製品", "麻豆碗粿", "在地古早味冰品"],
+        "sight": ["林鳳營車站（日式老站房）", "六甲落羽松森林", "烏山頭水庫（鄰近）"]
+    },
+    "隆田": {
+        "food": ["隆田酒廠在地小吃", "善化牛肉湯", "麻豆碗粿"],
+        "sight": ["隆田CHA CHA文化資產教育園區", "烏山頭水庫", "官田水雉生態園區"]
+    },
+    "拔林": {
+        "food": ["善化在地小吃", "善化牛肉湯", "在地碗粿"],
+        "sight": ["拔林車站（迷你秘境站）", "善化糖廠", "大內南瀛天文館"]
+    },
+    "南科": {
+        "food": ["南科園區商圈美食", "善化牛肉湯", "新市在地小吃"],
+        "sight": ["南科考古館", "南科迎曦湖", "樹谷生活科學館"]
+    },
+    "新市": {
+        "food": ["新市肉粿", "在地虱目魚粥", "新市豆菜麵"],
+        "sight": ["新市社內遺址", "大新營區自行車道", "南科園區公園"]
+    },
+    "大橋": {
+        "food": ["永康大橋鱔魚意麵", "永康復國市場小吃", "台南鹽酥雞"],
+        "sight": ["永康公園", "永康探索教育公園", "台南大橋都會風光"]
+    },
+    "仁德": {
+        "food": ["仁德阿裕牛肉湯", "仁德在地蝦捲", "仁德萬國通路手作觀光工廠餐廳"],
+        "sight": ["十鼓仁糖文創園區", "奇美博物館", "台南都會公園"]
+    },
+    "中洲": {
+        "food": ["保安車站周邊古早味", "仁德在地小吃", "車路墘肉粿"],
+        "sight": ["保安車站（永保安康）", "虎山林場步道", "歸仁老街"]
+    },
+    "長榮大學": {
+        "food": ["歸仁在地肉燥飯", "大學城周邊小吃", "歸仁豆花"],
+        "sight": ["長榮大學校園", "歸仁公園", "歸仁仁壽宮"]
+    },
+    "沙崙": {
+        "food": ["高鐵站美食街", "歸仁在地美食", "台南鮮魚湯"],
+        "sight": ["高鐵台南站", "台南沙崙綠能科學城", "歸仁十三甲武當山"]
+    },
+    # ===== 高雄 =====
+    "大湖": {
+        "food": ["路竹鵝肉", "岡山羊肉爐", "在地小吃攤"],
+        "sight": ["大湖車站田園風光", "路竹農場", "岡山之眼（鄰近）"]
+    },
+    "路竹": {
+        "food": ["路竹夜市小吃", "路竹鵝肉", "在地虱目魚料理"],
+        "sight": ["路竹體育園區", "蔡文國小日式校舍", "高雄科學園區"]
+    },
+    "左營(舊城)": {
+        "food": ["左營眷村美食", "劉家酸菜白肉鍋", "左營大路汾陽餛飩"],
+        "sight": ["鳳山縣舊城", "左營蓮池潭", "見城館"]
+    },
+    "內惟": {
+        "food": ["內惟市場小吃", "美術館周邊咖啡廳", "內惟在地碗粿"],
+        "sight": ["內惟藝術中心", "高雄美術館", "柴山自然公園"]
+    },
+    "美術館": {
+        "food": ["美術館周邊文青咖啡", "明誠路餐廳街", "馬家麵線"],
+        "sight": ["高雄市立美術館", "美術館雕塑公園", "柴山步道入口"]
+    },
+    "鼓山": {
+        "food": ["哈瑪星古早味", "鼓山渡船頭海之冰", "西子灣海產"],
+        "sight": ["哈瑪星鐵道文化園區", "武德殿", "西子灣隧道"]
+    },
+    "三塊厝": {
+        "food": ["三塊厝老街小吃", "鹽埕區古早味", "大溝頂市場"],
+        "sight": ["三塊厝車站（百年站房）", "愛河之心", "高雄願景館"]
+    },
+    "民族": {
+        "food": ["自強夜市小吃", "民族路烤肉", "高雄肉燥飯"],
+        "sight": ["高雄科工館（鄰近）", "三民公園", "建功路眷村文化"]
+    },
+    "科工館": {
+        "food": ["九如路美食", "科工館旁便當街", "三民市場小吃"],
+        "sight": ["國立科學工藝博物館", "三民家商旁公園", "本和里滯洪公園"]
+    },
+    "正義": {
+        "food": ["鳳山中華夜市", "正義路小吃", "鳳山肉圓"],
+        "sight": ["衛武營國家藝術文化中心", "鳳山城隍廟", "大東文化藝術中心"]
+    },
+    # ===== 屏東線 =====
+    "六塊厝": {
+        "food": ["屏東夜市小吃", "萬丹紅豆餅", "在地粿仔條"],
+        "sight": ["六塊厝車站田園風光", "屏東公園", "萬丹鄉間風情"]
+    },
+    "歸來": {
+        "food": ["屏東肉圓", "在地鮮魚湯", "歸來社區小吃"],
+        "sight": ["歸來車站（小站風情）", "屏東菸葉廠", "麟洛車站鐵馬道"]
+    },
+    "麟洛": {
+        "food": ["麟洛客家粄條", "客家鹹豬肉", "屏東夜市"],
+        "sight": ["麟洛運動公園", "六堆客家文化園區（鄰近）", "屏東自行車國道"]
+    },
+    "西勢": {
+        "food": ["六堆客家菜", "西勢粄條", "客家封肉"],
+        "sight": ["六堆客家文化園區", "西勢車站（客庄風情）", "竹田驛園"]
+    },
+    "竹田": {
+        "food": ["竹田驛園旁客家菜", "客家擂茶", "竹田在地碗粿"],
+        "sight": ["竹田驛園（日式站房）", "竹田老街", "達達港水利公園"]
+    },
+    "崁頂": {
+        "food": ["崁頂在地肉燥飯", "東港黑鮪魚（鄰近）", "萬丹紅豆湯"],
+        "sight": ["崁頂田園風光", "力社北院媽祖廟", "東港大鵬灣（鄰近）"]
+    },
+    "鎮安": {
+        "food": ["林邊黑珍珠蓮霧", "東港海鮮", "在地虱目魚料理"],
+        "sight": ["鎮安車站（小站秘境）", "林邊溪堤防步道", "光采濕地"]
+    },
+    "佳冬": {
+        "food": ["佳冬蓮霧", "海鮮快炒", "客家粄條"],
+        "sight": ["佳冬蕭家古厝", "佳冬客家聚落", "楊氏宗祠"]
+    },
+    "東海": {
+        "food": ["枋寮海產", "東海在地小吃", "芒果冰（季節限定）"],
+        "sight": ["東海車站海景", "枋寮藝術村（鄰近）", "東海漁港"]
+    },
+    # ===== 南迴線 =====
+    "內獅": {
+        "food": ["枋山芒果（季節限定）", "枋寮海鮮", "原住民風味餐"],
+        "sight": ["內獅車站（最少人的車站之一）", "獅子鄉原鄉風情", "雙流國家森林遊樂區"]
+    },
+    "枋山": {
+        "food": ["枋山芒果", "愛文芒果冰", "在地海鮮"],
+        "sight": ["枋山車站海景", "枋山超級56K觀海涼亭", "枋山沿海公路風光"]
+    },
+    "瀧溪": {
+        "food": ["原住民野菜料理", "小米酒", "山產風味餐"],
+        "sight": ["瀧溪車站秘境", "大武山自然保留區（遠眺）", "太平洋海岸線"]
+    },
+    "山里": {
+        "food": ["台東米苔目", "山里在地部落美食", "小米粽"],
+        "sight": ["山里車站（到不了的車站）", "山里教堂", "初鹿牧場（鄰近）"]
+    },
+    # ===== 臺東線 =====
+    "瑞源": {
+        "food": ["鹿野紅烏龍茶", "在地釋迦冰品", "原住民風味餐"],
+        "sight": ["瑞源小學日式校長宿舍", "鹿野鄉田園風光", "二層坪水橋"]
+    },
+    "瑞和": {
+        "food": ["關山便當", "關山米做成的米乖乖", "在地茶飲"],
+        "sight": ["瑞和車站（稻田小站）", "關山親水公園（鄰近）", "197縣道田園單車道"]
+    },
+    "海端": {
+        "food": ["布農族風味餐", "小米飯", "山豬肉串"],
+        "sight": ["海端鄉布農族文化館", "霧鹿峽谷（上游）", "南橫公路入口"]
+    },
+    "東竹": {
+        "food": ["富里農會便當", "花東縱谷米食", "在地野菜料理"],
+        "sight": ["東竹車站田園秘境", "富里稻田景觀", "羅山瀑布（鄰近）"]
+    },
+    "東里": {
+        "food": ["玉里麵", "玉里臭豆腐（鄰近）", "在地米食料理"],
+        "sight": ["東里車站（稻田中的車站）", "玉富自行車道", "六十石山（季節金針花）"]
+    },
+    "三民": {
+        "food": ["玉里麵", "玉里橋頭臭豆腐", "瑞穗鮮乳製品"],
+        "sight": ["三民車站鐵道風光", "赤科山（季節金針花）", "玉里神社遺址"]
+    },
+    "富源": {
+        "food": ["瑞穗鮮奶饅頭", "富源在地小吃", "蝴蝶谷附近餐廳"],
+        "sight": ["富源國家森林遊樂區（蝴蝶谷）", "拉索埃湧泉", "富源車站"]
+    },
+    "大富": {
+        "food": ["光復糖廠冰淇淋", "阿美族野菜", "在地豐年餐"],
+        "sight": ["大富平地森林園區", "大農大富花海（季節限定）", "光復糖廠"]
+    },
+    "萬榮": {
+        "food": ["光復糖廠冰品", "太巴塱部落風味餐", "紅糯米飯"],
+        "sight": ["萬榮林田山林業文化園區", "馬太鞍溼地", "太巴塱部落"]
+    },
+    "南平": {
+        "food": ["鳳林剝皮辣椒", "鳳林韭菜臭豆腐", "客家菜包"],
+        "sight": ["南平車站田園風光", "鳳林客家文物館", "箭瑛大橋"]
+    },
+    "豐田": {
+        "food": ["豐田在地日式料理", "壽豐豆花", "在地有機蔬食"],
+        "sight": ["豐田移民村（日式遺跡）", "豐田玉展示館", "碧蓮寺"]
+    },
+    "平和": {
+        "food": ["壽豐在地小吃", "志學周邊學生美食", "壽豐豆花"],
+        "sight": ["平和車站秘境", "鯉魚潭（鄰近）", "東華大學校園"]
+    },
+    # ===== 北迴線 =====
+    "景美": {
+        "food": ["新城老街小吃", "佳興冰果室檸檬汁", "原住民風味餐"],
+        "sight": ["景美車站鐵道風光", "新城照相館", "三棧溪戲水（季節限定）"]
+    },
+    "崇德": {
+        "food": ["崇德在地小吃", "太魯閣附近原住民料理", "花蓮扁食"],
+        "sight": ["崇德海灘（最美海灘之一）", "清水斷崖眺望點", "太魯閣國家公園入口"]
+    },
+    "和仁": {
+        "food": ["太魯閣周邊餐廳", "原住民獵人便當", "在地山產"],
+        "sight": ["和仁海灘", "清水斷崖北端", "蘇花公路絕美海景"]
+    },
+    "漢本": {
+        "food": ["漢本車站旁雜貨店", "南澳在地原住民小吃", "蘇花沿線便當"],
+        "sight": ["漢本車站（絕壁小站）", "漢本海灘", "蘇花公路最美路段"]
+    },
+    "武塔": {
+        "food": ["南澳建華冰店", "泰雅族風味餐", "南澳在地小吃"],
+        "sight": ["武塔部落泰雅文化", "南澳古道入口", "武塔車站鐵道風光"]
+    },
+    "東澳": {
+        "food": ["東澳粉鳥林漁港海鮮", "東岳湧泉旁小吃", "在地飛魚料理"],
+        "sight": ["東澳灣", "粉鳥林漁港秘境", "東岳湧泉（夏季戲水）"]
+    },
+    "永樂": {
+        "food": ["蘇澳冷泉附近小吃", "蘇澳海鮮", "白米木屐村旁餐廳"],
+        "sight": ["永樂車站海灣風光", "白米木屐村", "蘇澳冷泉（鄰近）"]
+    },
+    # ===== 宜蘭線 =====
+    "新馬": {
+        "food": ["蘇澳海鮮", "蘇澳冷泉汽水", "南方澳魚丸"],
+        "sight": ["新馬車站", "冬山河下游", "蘇澳冷泉公園"]
+    },
+    "中里": {
+        "food": ["羅東夜市小吃", "羅東肉羹番", "包心粉圓"],
+        "sight": ["中里車站（迷你小站）", "羅東運動公園", "冬山河自行車道"]
+    },
+    "二結": {
+        "food": ["二結在地小吃", "宜蘭蔥油餅", "鴨賞"],
+        "sight": ["二結穀倉稻農文化館", "宜蘭傳統藝術中心（鄰近）", "冬山河"]
+    },
+    "四城": {
+        "food": ["礁溪蔥油餅", "礁溪溫泉拉麵", "甕仔雞"],
+        "sight": ["四城車站田園風光", "礁溪溫泉（鄰近）", "吳沙紀念館"]
+    },
+    "頂埔": {
+        "food": ["礁溪溫泉蔬菜", "礁溪蔥油餅", "柯氏蔥油餅"],
+        "sight": ["頂埔車站鄉村風光", "礁溪五峰旗瀑布（鄰近）", "林美石磐步道"]
+    },
+    "外澳": {
+        "food": ["頭城老街小吃", "阿宗芋冰城", "外澳衝浪區餐廳"],
+        "sight": ["外澳海灘（衝浪勝地）", "外澳服務區觀景", "龜山島眺望點"]
+    },
+    "龜山": {
+        "food": ["龜山島海鮮", "在地魚丸", "頭城老街小吃"],
+        "sight": ["龜山車站（最靠近龜山島）", "龜山島眺望", "北關海潮公園"]
+    },
+    "大溪": {
+        "food": ["大溪漁港海鮮", "大溪蜜餞", "現撈仔漁獲"],
+        "sight": ["大溪漁港", "大溪車站海景", "蜜月灣（衝浪）"]
+    },
+    "大里": {
+        "food": ["大里天公廟旁小吃", "石花凍", "頭城海鮮"],
+        "sight": ["大里天公廟", "草嶺古道入口", "大里海岸步道"]
+    },
+    "石城": {
+        "food": ["石城在地小吃攤", "石花凍", "草嶺古道出口旁小店"],
+        "sight": ["石城車站（宜蘭最北站）", "草嶺古道北端", "石城海岸礁石步道"]
+    },
+    "四腳亭": {
+        "food": ["四腳亭在地小吃", "瑞芳美食街", "礦工便當"],
+        "sight": ["四腳亭砲台古蹟", "瑞芳老街（鄰近）", "四腳亭步道"]
+    },
+    "猴硐": {
+        "food": ["猴硐貓村咖啡廳", "礦工便當", "古早味麵食"],
+        "sight": ["猴硐貓村", "猴硐煤礦博物園區", "三貂嶺瀑布步道入口"]
+    },
+    "三貂嶺": {
+        "food": ["三貂嶺咖啡（藝文空間）", "猴硐美食（鄰近）", "在地古早味"],
+        "sight": ["三貂嶺瀑布步道", "三貂嶺生態友善隧道", "碩仁國小遺址"]
+    },
+    "牡丹": {
+        "food": ["牡丹老街小吃", "牡丹車站旁麵攤", "在地山產料理"],
+        "sight": ["牡丹老街", "牡丹車站日式站房", "貂山古道入口"]
+    },
+    # ===== 平溪線 =====
+    "大華": {
+        "food": ["十分老街小吃", "花生捲冰淇淋", "礦工便當"],
+        "sight": ["大華壺穴", "大華車站（秘境小站）", "十分瀑布步道"]
+    },
+    "十分": {
+        "food": ["十分老街花生捲冰淇淋", "十分雞翅包飯", "礦工便當"],
+        "sight": ["十分瀑布", "十分老街放天燈", "十分車站鐵道風光"]
+    },
+    "望古": {
+        "food": ["平溪老街小吃", "山泉豆花", "在地野菜"],
+        "sight": ["望古瀑布（秘境）", "望古車站（最冷門站）", "望古賞螢步道"]
+    },
+    "嶺腳": {
+        "food": ["嶺腳古早味麵店", "平溪老街小吃", "山產料理"],
+        "sight": ["嶺腳瀑布", "嶺腳車站", "嶺腳寮山步道"]
+    },
+    "平溪": {
+        "food": ["平溪老街香腸", "芋圓", "古早味冰品"],
+        "sight": ["平溪老街放天燈", "平溪防空洞", "孝子山步道"]
+    },
+    "菁桐": {
+        "food": ["菁桐老街雞捲", "菁桐礦工食堂", "紅寶礦場咖啡"],
+        "sight": ["菁桐車站（日式站房）", "菁桐老街許願竹筒", "菁桐礦業生活館"]
+    },
+    # ===== 深澳線 =====
+    # 海科館 & 八斗子 已在上方
+    # ===== 花蓮臨港線 =====
+    "花蓮港": {
+        "food": ["花蓮扁食", "液香扁食", "花蓮公正包子"],
+        "sight": ["花蓮港觀景台", "太平洋公園", "花蓮市區自強夜市"]
+    },
+}
+
 def main():
     # 讀取 CSV
     stations = []
@@ -176,6 +752,7 @@ def main():
     candidates = [s for s in stations if not s["express"]]
     data_json = json.dumps(stations, ensure_ascii=False)
     candidates_json = json.dumps(candidates, ensure_ascii=False)
+    info_json = json.dumps(STATION_INFO, ensure_ascii=False)
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
@@ -212,7 +789,7 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
 /* slot machine */
 .slot-wrap{{flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:10px 24px;gap:16px}}
+  justify-content:center;padding:10px 24px;gap:12px;overflow-y:auto;min-height:0}}
 .slot-window{{width:100%;height:200px;border-radius:16px;overflow:hidden;position:relative;
   background:#0f172a;border:2px solid #334155;
   box-shadow:inset 0 0 40px rgba(56,189,248,.06)}}
@@ -245,6 +822,51 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
 .result-card .station-meta{{font-size:.9rem;color:#94a3b8;margin-top:6px}}
 .result-card .placeholder{{color:#475569;font-size:.95rem}}
+
+/* info panel (food & sight) */
+.info-panel{{width:100%;display:none;gap:10px;max-height:260px;overflow-y:auto;
+  padding:2px 0;scrollbar-width:thin;scrollbar-color:#334155 transparent}}
+.info-panel.visible{{display:flex;flex-direction:column}}
+.info-section{{padding:0}}
+.info-section-title{{font-size:.78rem;font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;padding-left:2px;
+  text-transform:uppercase;letter-spacing:1px}}
+.info-section-title.food-title{{color:#fbbf24}}
+.info-section-title.sight-title{{color:#34d399}}
+.info-cards{{display:flex;flex-direction:column;gap:6px}}
+
+/* individual card */
+.info-card{{display:flex;align-items:center;gap:12px;
+  padding:10px 14px;border-radius:12px;
+  transition:all .25s ease;opacity:0;transform:translateY(8px);
+  animation:cardFadeIn .4s ease forwards}}
+.info-card:hover{{transform:translateY(-1px) scale(1.01)}}
+.info-card .card-emoji{{font-size:1.5rem;flex-shrink:0;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;background:rgba(255,255,255,.06)}}
+.info-card .card-text{{font-size:.82rem;color:#e2e8f0;font-weight:500;
+  line-height:1.3}}
+
+/* food card warm tones */
+.info-card.food-card{{
+  background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,146,60,.04));
+  border:1px solid rgba(251,191,36,.2)}}
+.info-card.food-card:hover{{
+  border-color:rgba(251,191,36,.4);
+  box-shadow:0 0 16px rgba(251,191,36,.1)}}
+
+/* sight card cool tones */
+.info-card.sight-card{{
+  background:linear-gradient(135deg,rgba(52,211,153,.08),rgba(56,189,248,.04));
+  border:1px solid rgba(52,211,153,.2)}}
+.info-card.sight-card:hover{{
+  border-color:rgba(52,211,153,.4);
+  box-shadow:0 0 16px rgba(52,211,153,.1)}}
+
+/* stagger animation */
+@keyframes cardFadeIn{{
+  to{{opacity:1;transform:translateY(0)}}
+}}
 
 /* button */
 .btn-draw{{width:100%;padding:16px;border:none;border-radius:14px;cursor:pointer;
@@ -366,9 +988,44 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
 /* responsive */
 @media(max-width:800px){{
-  #app{{flex-direction:column}}
-  #panel{{width:100%;height:55vh;min-width:0}}
-  #map-wrap{{height:45vh}}
+  body{{overflow:auto;height:auto}}
+  #app{{flex-direction:column;height:auto;min-height:100vh}}
+  #panel{{width:100%;min-width:0;height:auto;max-height:none;
+    border-right:none;border-bottom:1px solid #334155}}
+  #map-wrap{{height:40vh;min-height:280px;position:sticky;bottom:0}}
+
+  .panel-header{{padding:16px 16px 6px}}
+  .panel-header h1{{font-size:1.3rem}}
+  .panel-header p{{font-size:.75rem;margin-top:3px}}
+
+  .stats{{gap:8px;padding:6px 12px;font-size:.7rem}}
+  .stats span{{padding:3px 8px}}
+
+  .slot-wrap{{padding:8px 16px;gap:10px}}
+  .slot-window{{height:140px}}
+  .slot-item{{height:35px;font-size:1rem}}
+  .slot-item.highlight{{font-size:1.3rem}}
+
+  .result-card{{padding:14px;min-height:80px}}
+  .result-card .station-name{{font-size:1.5rem}}
+  .result-card .station-meta{{font-size:.8rem}}
+
+  .info-panel{{max-height:none;padding:0}}
+  .info-card{{padding:8px 12px;gap:10px}}
+  .info-card .card-emoji{{font-size:1.3rem;width:32px;height:32px;border-radius:8px}}
+  .info-card .card-text{{font-size:.78rem}}
+  .info-section-title{{font-size:.72rem}}
+
+  .controls{{padding:10px 16px 16px;gap:8px}}
+  .btn-draw{{padding:14px;font-size:1rem;letter-spacing:1px}}
+  .count-row label{{font-size:.8rem}}
+  .count-row select{{padding:5px 10px;font-size:.85rem}}
+
+  .history{{padding:0 16px 12px;max-height:70px}}
+  .history-tag{{font-size:.7rem;padding:2px 8px}}
+
+  .countdown-num{{font-size:5rem}}
+  .countdown-num.go{{font-size:3.5rem}}
 }}
 </style>
 </head>
@@ -400,6 +1057,11 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
       </div>
       <div class="result-card" id="resultCard">
         <span class="placeholder">點擊下方按鈕開始抽籤</span>
+      </div>
+
+      <div class="info-panel" id="infoPanel">
+        <div class="info-section" id="infoFood"></div>
+        <div class="info-section" id="infoSight"></div>
       </div>
     </div>
 
@@ -434,6 +1096,7 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 const allStations  = {data_json};
 const candidates   = {candidates_json};
 const expressStations = allStations.filter(s => s.express);
+const stationInfo = {info_json};
 
 // ============================================================
 // Web Audio API — Sound Effects
@@ -751,7 +1414,8 @@ const slotWindow = document.getElementById('slotWindow');
 const slotTrack  = document.getElementById('slotTrack');
 const resultCard = document.getElementById('resultCard');
 const btnDraw    = document.getElementById('btnDraw');
-const ITEM_H = 50;
+const isMobile = window.matchMedia('(max-width:800px)').matches;
+const ITEM_H = isMobile ? 35 : 50;
 
 let isSpinning = false;
 let history = [];
@@ -769,7 +1433,8 @@ function buildTrack() {{
     div.dataset.index = i;
     slotTrack.appendChild(div);
   }});
-  slotTrack.style.transform = 'translateY(75px)';
+  const initOffset = isMobile ? 52 : 75;
+  slotTrack.style.transform = 'translateY(' + initOffset + 'px)';
   return pool;
 }}
 
@@ -788,6 +1453,7 @@ async function startDraw() {{
   map.flyTo([23.7, 121.0], 8, {{ duration: 1.0 }});
   resultCard.classList.remove('has-result', 'reveal-anim');
   resultCard.innerHTML = '<span class="placeholder">準備中...</span>';
+  document.getElementById('infoPanel').classList.remove('visible');
 
   // ---- COUNTDOWN ----
   await runCountdown();
@@ -810,10 +1476,11 @@ async function startDraw() {{
     startMapFlicker();
     playDrumRoll();
 
-    const targetY = 75 - landIndex * ITEM_H;
-    const duration = 3500 + Math.random() * 500;
+    const baseOffset = isMobile ? 52 : 75;
+    const targetY = baseOffset - landIndex * ITEM_H;
+    const duration = isMobile ? (2800 + Math.random() * 400) : (3500 + Math.random() * 500);
     const startTime = performance.now();
-    const startY = 75;
+    const startY = baseOffset;
     let lastTickItem = -1;
 
     function easeOutQuint(t) {{ return 1 - Math.pow(1 - t, 5); }}
@@ -855,6 +1522,7 @@ async function startDraw() {{
 
         // update result card with animation
         showResult(winners.slice(0, seq + 1));
+        showStationInfo(winners.slice(0, seq + 1));
         resultCard.classList.remove('reveal-anim');
         void resultCard.offsetWidth;
         resultCard.classList.add('reveal-anim');
@@ -873,6 +1541,12 @@ async function startDraw() {{
           }} else {{
             const bounds = L.latLngBounds(winners.map(w => [w.lat, w.lng]));
             map.flyToBounds(bounds.pad(0.3), {{ duration: 1.5 }});
+          }}
+          // mobile: scroll to map
+          if (isMobile) {{
+            setTimeout(() => {{
+              document.getElementById('map-wrap').scrollIntoView({{ behavior: 'smooth' }});
+            }}, 400);
           }}
           isSpinning = false;
           btnDraw.disabled = false;
@@ -899,6 +1573,86 @@ function showResult(winners) {{
       ' <span class="station-meta" style="font-size:.78rem">' + w.city + '</span></div>'
     ).join('');
   }}
+}}
+
+// keyword -> emoji mapping
+const foodEmojiRules = [
+  [/麵|粄條|米粉|麵線/, '🍜'],
+  [/飯|便當|米糕|粥|燴飯|油飯/, '🍚'],
+  [/冰|冰品|冰淇淋|冰棒|枝仔冰|雪花/, '🍧'],
+  [/海鮮|魚|蝦|蟹|蚵|小卷|鮪|虱目|鰻|花枝/, '🦐'],
+  [/雞|鵝|鴨|雞肉|鵝肉/, '🍗'],
+  [/茶|咖啡|擂茶|紅茶|綠茶|檸檬/, '☕'],
+  [/肉|排骨|牛肉|豬|羊肉|香腸|臭豆腐|鹹豬/, '🥩'],
+  [/酒|啤酒/, '🍺'],
+  [/豆花|甜點|糕|粿|蛋糕|芋圓|圓|餅|酥|蜜餞|蓮霧|芒果|葡萄|釋迦|梅/, '🍰'],
+  [/湯|羹|鍋/, '🍲'],
+  [/包|捲|粽|餃/, '🥟'],
+];
+const sightEmojiRules = [
+  [/步道|山|登山|古道|嶺/, '⛰️'],
+  [/海|漁港|海灘|海岸|灣|衝浪|潮境/, '🏖️'],
+  [/老街|車站|古蹟|古厝|日式|眷村|隧道/, '🏮'],
+  [/公園|園區|森林|濕地|牧場|農/, '🌿'],
+  [/瀑布|溪|湖|泉|水庫|圳|河/, '💧'],
+  [/博物館|美術館|文化|藝術|紀念|展示/, '🎨'],
+  [/夜市|市場|商圈/, '🏮'],
+  [/寺|廟|宮|教堂/, '⛩️'],
+  [/自行車|鐵馬|單車/, '🚲'],
+  [/觀景|眺望|夕陽|日出/, '🌅'],
+];
+const defaultFoodEmoji = '🍴';
+const defaultSightEmoji = '📍';
+
+function getEmoji(text, rules, fallback) {{
+  for (const [re, emoji] of rules) {{
+    if (re.test(text)) return emoji;
+  }}
+  return fallback;
+}}
+
+function renderCards(items, type, rules, fallback) {{
+  return items.map((text, i) => {{
+    const emoji = getEmoji(text, rules, fallback);
+    const delay = (i * 0.08).toFixed(2);
+    return '<div class="info-card ' + type + '-card" style="animation-delay:' + delay + 's">' +
+      '<span class="card-emoji">' + emoji + '</span>' +
+      '<span class="card-text">' + text + '</span></div>';
+  }}).join('');
+}}
+
+function showStationInfo(winners) {{
+  const panel = document.getElementById('infoPanel');
+  const foodEl = document.getElementById('infoFood');
+  const sightEl = document.getElementById('infoSight');
+
+  let allFood = [];
+  let allSight = [];
+  winners.forEach(w => {{
+    const info = stationInfo[w.name];
+    if (info) {{
+      const prefix = winners.length > 1 ? ('[' + w.name + '] ') : '';
+      if (info.food) info.food.forEach(f => allFood.push(prefix + f));
+      if (info.sight) info.sight.forEach(s => allSight.push(prefix + s));
+    }}
+  }});
+
+  if (allFood.length === 0 && allSight.length === 0) {{
+    panel.classList.remove('visible');
+    return;
+  }}
+
+  foodEl.className = 'info-section';
+  foodEl.innerHTML =
+    '<div class="info-section-title food-title">&#127836; \u7279\u8272\u7f8e\u98df</div>' +
+    '<div class="info-cards">' + renderCards(allFood, 'food', foodEmojiRules, defaultFoodEmoji) + '</div>';
+
+  sightEl.className = 'info-section';
+  sightEl.innerHTML =
+    '<div class="info-section-title sight-title">&#128205; \u89c0\u5149\u666f\u9ede</div>' +
+    '<div class="info-cards">' + renderCards(allSight, 'sight', sightEmojiRules, defaultSightEmoji) + '</div>';
+
+  panel.classList.add('visible');
 }}
 
 function updateHistory() {{
