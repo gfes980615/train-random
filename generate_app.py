@@ -1802,7 +1802,94 @@ function updateHistory() {{
   ).join('');
 }}
 
-// init
+// ============================================================
+// Filter Tags — render & toggle
+// ============================================================
+function renderFilterTags() {{
+  const routeWrap = document.getElementById('filterRoute');
+  const regionWrap = document.getElementById('filterRegion');
+
+  // keep the label, clear tags
+  routeWrap.innerHTML = '<span class="filter-group-label">路線</span>';
+  regionWrap.innerHTML = '<span class="filter-group-label">區域</span>';
+
+  Object.keys(ROUTE_MAP).forEach(name => {{
+    const tag = document.createElement('span');
+    tag.className = 'filter-tag' + (activeRoutes.has(name) ? ' active' : '');
+    tag.textContent = name;
+    tag.onclick = () => {{
+      if (activeRoutes.has(name)) activeRoutes.delete(name);
+      else activeRoutes.add(name);
+      tag.classList.toggle('active');
+      updateFilteredCount();
+    }};
+    routeWrap.appendChild(tag);
+  }});
+
+  Object.keys(REGION_MAP).forEach(name => {{
+    const tag = document.createElement('span');
+    tag.className = 'filter-tag' + (activeRegions.has(name) ? ' active' : '');
+    tag.textContent = name;
+    tag.onclick = () => {{
+      if (activeRegions.has(name)) activeRegions.delete(name);
+      else activeRegions.add(name);
+      tag.classList.toggle('active');
+      updateFilteredCount();
+    }};
+    regionWrap.appendChild(tag);
+  }});
+}}
+
+// ============================================================
+// Reset progress
+// ============================================================
+function resetProgress() {{
+  if (!confirm('確定要重置制霸進度嗎？所有抽籤記錄將被清除')) return;
+  drawnStations.clear();
+  historyData = [];
+  saveDrawn();
+  saveHistory();
+  updateProgress();
+  updateFilteredCount();
+  renderHistory();
+}}
+
+// ============================================================
+// History — render with timestamps
+// ============================================================
+function renderHistory() {{
+  const list = document.getElementById('historyList');
+  if (historyData.length === 0) {{
+    list.innerHTML = '<span class="history-tag" style="color:#475569">尚無記錄</span>';
+    return;
+  }}
+  list.innerHTML = historyData.slice(0, 50).map(h => {{
+    const d = new Date(h.time);
+    const label = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + h.name;
+    return '<span class="history-tag">' + label + '</span>';
+  }}).join('');
+}}
+
+// ============================================================
+// Conquer-all celebration
+// ============================================================
+function checkConquer() {{
+  if (drawnStations.size >= TOTAL_CANDIDATES) {{
+    const overlay = document.getElementById('conquerOverlay');
+    overlay.classList.add('active');
+    spawnFullScreenConfetti();
+    spawnFullScreenConfetti();
+    setTimeout(() => overlay.classList.remove('active'), 4000);
+  }}
+}}
+
+// ============================================================
+// Init
+// ============================================================
+renderFilterTags();
+renderHistory();
+updateProgress();
+updateFilteredCount();
 buildTrack();
 </script>
 </body>
