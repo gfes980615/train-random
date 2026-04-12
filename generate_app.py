@@ -1159,6 +1159,75 @@ const expressStations = allStations.filter(s => s.express);
 const stationInfo = {info_json};
 
 // ============================================================
+// Filter & Progress State
+// ============================================================
+const TOTAL_CANDIDATES = candidates.length;
+
+const ROUTE_MAP = {{
+  '縱貫線': ['縱貫線'],
+  '海岸線': ['海岸線'],
+  '山線': ['臺中線(山線)'],
+  '宜蘭線': ['宜蘭線'],
+  '北迴線': ['北迴線'],
+  '南迴線': ['南迴線'],
+  '臺東線': ['臺東線'],
+  '屏東線': ['屏東線'],
+  '支線': ['平溪線','內灣線','集集線','深澳線','沙崙線','六家線','花蓮臨港線'],
+}};
+const REGION_MAP = {{
+  '北部': ['基隆市','新北市','臺北市','桃園市','新竹縣','新竹市'],
+  '中部': ['苗栗縣','臺中市','彰化縣','南投縣','雲林縣'],
+  '南部': ['嘉義縣','嘉義市','臺南市','高雄市','屏東縣'],
+  '東部': ['宜蘭縣','花蓮縣','臺東縣'],
+}};
+
+const activeRoutes = new Set(Object.keys(ROUTE_MAP));
+const activeRegions = new Set(Object.keys(REGION_MAP));
+
+// localStorage persistence
+let drawnStations = new Set(JSON.parse(localStorage.getItem('train-random-drawn') || '[]'));
+let historyData = JSON.parse(localStorage.getItem('train-random-history') || '[]');
+
+function saveDrawn() {{
+  localStorage.setItem('train-random-drawn', JSON.stringify([...drawnStations]));
+}}
+function saveHistory() {{
+  localStorage.setItem('train-random-history', JSON.stringify(historyData));
+}}
+
+function getFilteredCandidates() {{
+  const allowedLines = new Set();
+  activeRoutes.forEach(r => ROUTE_MAP[r].forEach(l => allowedLines.add(l)));
+  const allowedCities = new Set();
+  activeRegions.forEach(r => REGION_MAP[r].forEach(c => allowedCities.add(c)));
+  return candidates.filter(s =>
+    allowedLines.has(s.line) && allowedCities.has(s.city) && !drawnStations.has(s.name)
+  );
+}}
+
+function updateFilteredCount() {{
+  const pool = getFilteredCandidates();
+  document.getElementById('statCandidateCount').textContent = pool.length;
+  const btn = document.getElementById('btnDraw');
+  if (pool.length === 0 && !isSpinning) {{
+    btn.disabled = true;
+    btn.textContent = drawnStations.size >= TOTAL_CANDIDATES
+      ? '已全制霸！' : '無可用車站';
+  }} else if (!isSpinning) {{
+    btn.disabled = false;
+    btn.textContent = '開始抽籤';
+  }}
+}}
+
+function updateProgress() {{
+  const count = drawnStations.size;
+  const pct = (count / TOTAL_CANDIDATES * 100).toFixed(1);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = count;
+  document.getElementById('statProgress').textContent = count;
+}}
+
+// ============================================================
 // Web Audio API — Sound Effects
 // ============================================================
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
