@@ -992,7 +992,8 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   #app{{flex-direction:column;height:auto;min-height:100vh}}
   #panel{{width:100%;min-width:0;height:auto;max-height:none;
     border-right:none;border-bottom:1px solid #334155}}
-  #map-wrap{{height:40vh;min-height:280px;position:sticky;bottom:0}}
+  #map-wrap{{height:50vh;min-height:300px;position:relative;flex-shrink:0}}
+  #map{{height:100%;width:100%}}
 
   .panel-header{{padding:16px 16px 6px}}
   .panel-header h1{{font-size:1.3rem}}
