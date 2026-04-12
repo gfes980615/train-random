@@ -232,12 +232,12 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
 /* responsive */
 @media(max-width:800px){
-  body{overflow:auto;height:auto}
-  #app{flex-direction:column;height:auto;min-height:100vh}
+  html,body{overflow:auto !important;height:auto !important}
+  #app{flex-direction:column;height:auto;min-height:auto}
   #panel{width:100%;min-width:0;height:auto;max-height:none;
-    border-right:none;border-bottom:1px solid #334155}
-  #map-wrap{height:50vh;min-height:300px;position:relative;flex-shrink:0}
-  #map{height:100%;width:100%}
+    border-right:none;border-bottom:1px solid #334155;overflow:visible}
+  #map-wrap{width:100%;height:50vh;min-height:300px;position:relative;flex-shrink:0}
+  #map{height:100% !important;width:100% !important;min-height:300px}
 
   .panel-header{padding:16px 16px 6px}
   .panel-header h1{font-size:1.3rem}
@@ -453,6 +453,14 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   subdomains: 'abcd',
   maxZoom: 19,
 }).addTo(map);
+
+// 手機版：確保地圖正確渲染
+if (window.matchMedia('(max-width:800px)').matches) {
+  setTimeout(() => { map.invalidateSize(); }, 100);
+  setTimeout(() => { map.invalidateSize(); }, 500);
+  setTimeout(() => { map.invalidateSize(); }, 1500);
+  window.addEventListener('resize', () => { map.invalidateSize(); });
+}
 
 const markerLayers = {};
 
@@ -791,6 +799,7 @@ async function startDraw() {
           if (isMobile) {
             setTimeout(() => {
               document.getElementById('map-wrap').scrollIntoView({ behavior: 'smooth' });
+              setTimeout(() => { map.invalidateSize(); }, 600);
             }, 400);
           }
           isSpinning = false;
