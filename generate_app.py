@@ -884,6 +884,40 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 .count-row select{{background:#1e293b;border:1px solid #334155;color:#e2e8f0;
   border-radius:8px;padding:6px 14px;font-size:.95rem}}
 
+/* filter tags */
+.filter-group{{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}}
+.filter-group-label{{width:100%;text-align:center;font-size:.7rem;color:#475569;
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}}
+.filter-tag{{padding:4px 12px;border-radius:8px;font-size:.75rem;cursor:pointer;
+  border:1px solid #334155;background:#1e293b;color:#64748b;
+  transition:all .2s;user-select:none}}
+.filter-tag.active{{background:linear-gradient(135deg,#6366f1,#818cf8);
+  color:#fff;border-color:#818cf8;box-shadow:0 2px 8px rgba(99,102,241,.3)}}
+.filter-tag:hover{{border-color:#6366f1}}
+
+/* progress bar */
+.progress-wrap{{width:100%;padding:0 24px;margin-top:2px}}
+.progress-bar{{width:100%;height:4px;background:#1e293b;border-radius:2px;overflow:hidden}}
+.progress-fill{{height:100%;border-radius:2px;transition:width .5s ease;
+  background:linear-gradient(90deg,#6366f1,#38bdf8)}}
+.progress-label{{display:flex;justify-content:center;align-items:center;gap:8px;
+  font-size:.72rem;color:#64748b;margin-top:4px}}
+.progress-label em{{color:#38bdf8;font-style:normal;font-weight:600}}
+.btn-reset{{background:none;border:1px solid #334155;color:#64748b;
+  padding:2px 8px;border-radius:4px;font-size:.65rem;cursor:pointer;transition:all .2s}}
+.btn-reset:hover{{border-color:#f87171;color:#f87171}}
+
+/* conquer overlay */
+.conquer-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(15,23,42,.9);opacity:0;transition:opacity .5s;pointer-events:none}}
+.conquer-overlay.active{{opacity:1;pointer-events:auto}}
+.conquer-title{{font-size:3rem;font-weight:900;
+  background:linear-gradient(135deg,#fbbf24,#f472b6,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:0 0 80px rgba(251,191,36,.4)}}
+.conquer-sub{{font-size:1.2rem;color:#94a3b8;margin-top:12px}}
+
 /* history */
 .history{{padding:0 24px 16px;max-height:90px;overflow-y:auto}}
 .history h3{{font-size:.78rem;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}}
@@ -1021,6 +1055,11 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   .btn-draw{{padding:14px;font-size:1rem;letter-spacing:1px}}
   .count-row label{{font-size:.8rem}}
   .count-row select{{padding:5px 10px;font-size:.85rem}}
+
+  .filter-tag{{padding:3px 8px;font-size:.65rem}}
+  .filter-group-label{{font-size:.6rem}}
+  .progress-wrap{{padding:0 16px}}
+  .progress-label{{font-size:.65rem}}
 
   .history{{padding:0 16px 12px;max-height:70px}}
   .history-tag{{font-size:.7rem;padding:2px 8px}}
