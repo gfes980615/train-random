@@ -1555,13 +1555,13 @@ const isMobile = window.matchMedia('(max-width:800px)').matches;
 const ITEM_H = isMobile ? 35 : 50;
 
 let isSpinning = false;
-let history = [];
 
-function buildTrack() {{
+function buildTrack(filteredPool) {{
   slotTrack.innerHTML = '';
+  const source = filteredPool || candidates;
   const pool = [];
   for (let i = 0; i < 80; i++) {{
-    pool.push(candidates[Math.floor(Math.random() * candidates.length)]);
+    pool.push(source[Math.floor(Math.random() * source.length)]);
   }}
   pool.forEach((s, i) => {{
     const div = document.createElement('div');
@@ -1578,12 +1578,15 @@ function buildTrack() {{
 // main draw — now with countdown + suspense + flicker + sound
 async function startDraw() {{
   if (isSpinning) return;
+  const pool = getFilteredCandidates();
+  if (pool.length === 0) return;
+
   isSpinning = true;
   btnDraw.disabled = true;
   ensureAudio();
 
-  const count = parseInt(document.getElementById('drawCount').value);
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  const count = Math.min(parseInt(document.getElementById('drawCount').value), pool.length);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const winners = shuffled.slice(0, count);
 
   clearResultMarkers();
@@ -1599,7 +1602,9 @@ async function startDraw() {{
   let seq = 0;
   function animateOne() {{
     const winner = winners[seq];
-    const pool = buildTrack();
+    const filteredPool = getFilteredCandidates();
+    const displayPool = filteredPool.length > 0 ? filteredPool : candidates;
+    const pool = buildTrack(displayPool);
 
     const landIndex = 60 + Math.floor(Math.random() * 5);
     const landItem = slotTrack.children[landIndex];
@@ -1664,9 +1669,13 @@ async function startDraw() {{
         void resultCard.offsetWidth;
         resultCard.classList.add('reveal-anim');
 
-        // add to history
-        history.unshift(winner);
-        updateHistory();
+        // add to history & track drawn
+        drawnStations.add(winner.name);
+        saveDrawn();
+        historyData.unshift({{ name: winner.name, city: winner.city, line: winner.line, time: new Date().toISOString() }});
+        saveHistory();
+        updateProgress();
+        renderHistory();
 
         seq++;
         if (seq < winners.length) {{
@@ -1688,6 +1697,8 @@ async function startDraw() {{
           }}
           isSpinning = false;
           btnDraw.disabled = false;
+          updateFilteredCount();
+          checkConquer();
         }}
       }}
     }}
@@ -1793,14 +1804,6 @@ function showStationInfo(winners) {{
   panel.classList.add('visible');
 }}
 
-function updateHistory() {{
-  const wrap = document.getElementById('historyWrap');
-  const list = document.getElementById('historyList');
-  wrap.style.display = 'block';
-  list.innerHTML = history.slice(0, 20).map(h =>
-    '<span class="history-tag">' + h.name + '</span>'
-  ).join('');
-}}
 
 // ============================================================
 // Filter Tags — render & toggle
