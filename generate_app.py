@@ -1076,6 +1076,11 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 <div class="countdown-overlay" id="countdownOverlay"></div>
 <!-- screen flash -->
 <div class="screen-flash" id="screenFlash"></div>
+<!-- conquer overlay -->
+<div class="conquer-overlay" id="conquerOverlay">
+  <div class="conquer-title">&#127942; 恭喜全制霸！</div>
+  <div class="conquer-sub">你已經抽過所有 138 個秘境小站！</div>
+</div>
 
 <div id="app">
   <!-- ===== 左側面板 ===== -->
@@ -1086,8 +1091,15 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
     </div>
     <div class="stats">
       <span>全部 <em>{len(stations)}</em> 站</span>
-      <span>候選 <em>{len(candidates)}</em> 站</span>
-      <span>已排除自強號 <em>{len(stations)-len(candidates)}</em> 站</span>
+      <span>候選 <em id="statCandidateCount">{len(candidates)}</em> 站</span>
+      <span>制霸 <em id="statProgress">0</em>/{len(candidates)}</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-label">
+        <span>已抽 <em id="progressText">0</em>/{len(candidates)} 站</span>
+        <button class="btn-reset" id="btnReset" onclick="resetProgress()">重置</button>
+      </div>
     </div>
 
     <div class="slot-wrap">
@@ -1106,6 +1118,12 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
     </div>
 
     <div class="controls">
+      <div class="filter-group" id="filterRoute">
+        <span class="filter-group-label">路線</span>
+      </div>
+      <div class="filter-group" id="filterRegion">
+        <span class="filter-group-label">區域</span>
+      </div>
       <div class="count-row">
         <label for="drawCount">抽籤數量</label>
         <select id="drawCount">
@@ -1118,9 +1136,11 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
       <button class="btn-draw" id="btnDraw" onclick="startDraw()">開始抽籤</button>
     </div>
 
-    <div class="history" id="historyWrap" style="display:none">
+    <div class="history" id="historyWrap">
       <h3>抽籤記錄</h3>
-      <div class="history-list" id="historyList"></div>
+      <div class="history-list" id="historyList">
+        <span class="history-tag" style="color:#475569">尚無記錄</span>
+      </div>
     </div>
   </div>
 
