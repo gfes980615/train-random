@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台鐵車站抽籤機</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* ---------- reset & base ---------- */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  background:#0f172a;color:#e2e8f0;overflow:hidden;height:100vh}
+
+/* ---------- layout ---------- */
+#app{display:flex;height:100vh}
+#panel{width:420px;min-width:360px;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#1e293b 0%,#0f172a 100%);
+  border-right:1px solid #334155;z-index:1000;position:relative}
+#map-wrap{flex:1;position:relative}
+#map{height:100%;width:100%}
+
+/* ---------- panel elements ---------- */
+.panel-header{text-align:center;padding:28px 20px 12px}
+.panel-header h1{font-size:1.6rem;font-weight:700;
+  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.panel-header p{font-size:.85rem;color:#94a3b8;margin-top:6px}
+
+/* stats bar */
+.stats{display:flex;justify-content:center;gap:16px;padding:10px;font-size:.78rem;color:#64748b}
+.stats span{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:4px 12px}
+.stats em{color:#38bdf8;font-style:normal;font-weight:600}
+
+/* slot machine */
+.slot-wrap{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:10px 24px;gap:12px;overflow-y:auto;min-height:0}
+.slot-window{width:100%;height:200px;border-radius:16px;overflow:hidden;position:relative;
+  background:#0f172a;border:2px solid #334155;
+  box-shadow:inset 0 0 40px rgba(56,189,248,.06)}
+.slot-window.spinning{border-color:#818cf8;
+  box-shadow:inset 0 0 40px rgba(129,140,248,.15),0 0 30px rgba(129,140,248,.1)}
+.slot-window.landed{border-color:#38bdf8;
+  box-shadow:inset 0 0 40px rgba(56,189,248,.2),0 0 40px rgba(56,189,248,.15)}
+
+/* mask gradients at top/bottom of slot */
+.slot-window::before,.slot-window::after{content:'';position:absolute;left:0;right:0;
+  height:50px;z-index:2;pointer-events:none}
+.slot-window::before{top:0;background:linear-gradient(#0f172a,transparent)}
+.slot-window::after{bottom:0;background:linear-gradient(transparent,#0f172a)}
+
+.slot-track{position:absolute;left:0;right:0;transition:none;will-change:transform}
+.slot-item{height:50px;display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;color:#64748b;white-space:nowrap}
+.slot-item.highlight{color:#f1f5f9;font-size:1.6rem;font-weight:700;
+  text-shadow:0 0 20px rgba(56,189,248,.5)}
+
+/* result card */
+.result-card{width:100%;background:linear-gradient(135deg,#1e293b,#1a1f35);
+  border-radius:16px;padding:20px;text-align:center;
+  border:1px solid #334155;min-height:110px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center}
+.result-card.has-result{border-color:#38bdf8;
+  box-shadow:0 0 30px rgba(56,189,248,.1)}
+.result-card .station-name{font-size:2rem;font-weight:800;
+  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.result-card .station-meta{font-size:.9rem;color:#94a3b8;margin-top:6px}
+.result-card .placeholder{color:#475569;font-size:.95rem}
+
+/* info panel (food & sight) */
+.info-panel{width:100%;display:none;gap:10px;max-height:260px;overflow-y:auto;
+  padding:2px 0;scrollbar-width:thin;scrollbar-color:#334155 transparent}
+.info-panel.visible{display:flex;flex-direction:column}
+.info-section{padding:0}
+.info-section-title{font-size:.78rem;font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;padding-left:2px;
+  text-transform:uppercase;letter-spacing:1px}
+.info-section-title.food-title{color:#fbbf24}
+.info-section-title.sight-title{color:#34d399}
+.info-cards{display:flex;flex-direction:column;gap:6px}
+
+/* individual card */
+.info-card{display:flex;align-items:center;gap:12px;
+  padding:10px 14px;border-radius:12px;
+  transition:all .25s ease;opacity:0;transform:translateY(8px);
+  animation:cardFadeIn .4s ease forwards}
+.info-card:hover{transform:translateY(-1px) scale(1.01)}
+.info-card .card-emoji{font-size:1.5rem;flex-shrink:0;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;background:rgba(255,255,255,.06)}
+.info-card .card-text{font-size:.82rem;color:#e2e8f0;font-weight:500;
+  line-height:1.3}
+
+/* food card warm tones */
+.info-card.food-card{
+  background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,146,60,.04));
+  border:1px solid rgba(251,191,36,.2)}
+.info-card.food-card:hover{
+  border-color:rgba(251,191,36,.4);
+  box-shadow:0 0 16px rgba(251,191,36,.1)}
+
+/* sight card cool tones */
+.info-card.sight-card{
+  background:linear-gradient(135deg,rgba(52,211,153,.08),rgba(56,189,248,.04));
+  border:1px solid rgba(52,211,153,.2)}
+.info-card.sight-card:hover{
+  border-color:rgba(52,211,153,.4);
+  box-shadow:0 0 16px rgba(52,211,153,.1)}
+
+/* stagger animation */
+@keyframes cardFadeIn{
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* button */
+.btn-draw{width:100%;padding:16px;border:none;border-radius:14px;cursor:pointer;
+  font-size:1.15rem;font-weight:700;letter-spacing:2px;
+  background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;
+  box-shadow:0 4px 20px rgba(99,102,241,.35);transition:all .2s}
+.btn-draw:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(99,102,241,.45)}
+.btn-draw:active{transform:translateY(0)}
+.btn-draw:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* bottom controls */
+.controls{padding:16px 24px 24px;display:flex;flex-direction:column;gap:12px}
+.count-row{display:flex;align-items:center;justify-content:center;gap:12px}
+.count-row label{font-size:.85rem;color:#94a3b8}
+.count-row select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;
+  border-radius:8px;padding:6px 14px;font-size:.95rem}
+
+/* history */
+.history{padding:0 24px 16px;max-height:90px;overflow-y:auto}
+.history h3{font-size:.78rem;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.history-list{display:flex;flex-wrap:wrap;gap:6px}
+.history-tag{background:#1e293b;border:1px solid #334155;border-radius:6px;
+  padding:2px 10px;font-size:.75rem;color:#94a3b8}
+
+/* ---------- map custom ---------- */
+.leaflet-popup-content-wrapper{background:#1e293b;color:#e2e8f0;border:1px solid #334155;
+  border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.leaflet-popup-tip{background:#1e293b}
+.leaflet-popup-content{font-family:inherit;font-size:.9rem;margin:12px 16px}
+.popup-name{font-size:1.1rem;font-weight:700;color:#38bdf8}
+.popup-meta{color:#94a3b8;font-size:.8rem;margin-top:4px}
+
+/* pulse marker */
+@keyframes pulse{
+  0%{transform:scale(1);opacity:.9}
+  50%{transform:scale(1.8);opacity:.3}
+  100%{transform:scale(2.4);opacity:0}
+}
+.marker-pulse{position:absolute;width:24px;height:24px;border-radius:50%;
+  background:rgba(56,189,248,.5);animation:pulse 1.5s ease-out infinite}
+
+/* confetti */
+@keyframes confetti-fall{
+  0%{transform:translateY(-10px) rotate(0deg) scale(1);opacity:1}
+  70%{opacity:1}
+  100%{transform:translateY(350px) rotate(1080deg) scale(0.3);opacity:0}
+}
+.confetti{position:absolute;width:10px;height:10px;border-radius:2px;
+  animation:confetti-fall 2.2s ease-in forwards;pointer-events:none;z-index:3}
+
+/* ---------- countdown overlay ---------- */
+.countdown-overlay{position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:rgba(15,23,42,.85);pointer-events:none;opacity:0;transition:opacity .3s}
+.countdown-overlay.active{opacity:1}
+.countdown-num{font-size:8rem;font-weight:900;color:transparent;
+  background:linear-gradient(135deg,#38bdf8,#818cf8,#f472b6);
+  -webkit-background-clip:text;text-shadow:0 0 80px rgba(56,189,248,.5);
+  animation:countPop .6s ease-out forwards}
+.countdown-num.go{font-size:5rem;letter-spacing:8px;
+  background:linear-gradient(135deg,#fbbf24,#fb923c,#f472b6);
+  -webkit-background-clip:text}
+@keyframes countPop{
+  0%{transform:scale(0.3);opacity:0}
+  50%{transform:scale(1.2);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+
+/* ---------- suspense text ---------- */
+.suspense-text{position:absolute;bottom:12px;left:0;right:0;text-align:center;
+  font-size:.82rem;color:#818cf8;z-index:4;opacity:0;
+  transition:opacity .4s;pointer-events:none;font-style:italic}
+.suspense-text.visible{opacity:1}
+
+/* ---------- screen flash ---------- */
+.screen-flash{position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:9998;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,rgba(56,189,248,.4),transparent 70%)}
+.screen-flash.flash{animation:flashBang .5s ease-out forwards}
+@keyframes flashBang{
+  0%{opacity:1}
+  100%{opacity:0}
+}
+
+/* ---------- result reveal ---------- */
+@keyframes revealShake{
+  0%,100%{transform:translateX(0)}
+  10%,30%,50%,70%,90%{transform:translateX(-4px)}
+  20%,40%,60%,80%{transform:translateX(4px)}
+}
+@keyframes revealGlow{
+  0%{box-shadow:0 0 0 rgba(56,189,248,0)}
+  50%{box-shadow:0 0 60px rgba(56,189,248,.4),0 0 120px rgba(129,140,248,.2)}
+  100%{box-shadow:0 0 30px rgba(56,189,248,.15)}
+}
+.result-card.reveal-anim{
+  animation:revealShake .5s ease-out,revealGlow 1.2s ease-out}
+
+/* ---------- floating particles ---------- */
+.particles-container{position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:0;
+  animation:floatUp linear infinite}
+@keyframes floatUp{
+  0%{opacity:0;transform:translateY(100vh) scale(0)}
+  10%{opacity:.6}
+  90%{opacity:.3}
+  100%{opacity:0;transform:translateY(-10vh) scale(1)}
+}
+
+/* ---------- big confetti full screen ---------- */
+@keyframes confetti-full{
+  0%{transform:translateY(-20px) rotate(0deg) scale(1);opacity:1}
+  80%{opacity:.8}
+  100%{transform:translateY(100vh) rotate(1440deg) scale(0.2);opacity:0}
+}
+.confetti-big{position:fixed;z-index:9997;pointer-events:none;
+  animation:confetti-full 3s ease-in forwards}
+
+/* responsive */
+@media(max-width:800px){
+  #app{flex-direction:column}
+  #panel{width:100%;height:55vh;min-width:0}
+  #map-wrap{height:45vh}
+}
+</style>
+</head>
+<body>
+<!-- floating particles -->
+<div class="particles-container" id="particlesContainer"></div>
+<!-- countdown overlay -->
+<div class="countdown-overlay" id="countdownOverlay"></div>
+<!-- screen flash -->
+<div class="screen-flash" id="screenFlash"></div>
+
+<div id="app">
+  <!-- ===== 左側面板 ===== -->
+  <div id="panel">
+    <div class="panel-header">
+      <h1>台鐵車站抽籤機</h1>
+      <p>排除自強號停靠站，探索秘境小站</p>
+    </div>
+    <div class="stats">
+      <span>全部 <em>241</em> 站</span>
+      <span>候選 <em>138</em> 站</span>
+      <span>已排除自強號 <em>103</em> 站</span>
+    </div>
+
+    <div class="slot-wrap">
+      <div class="slot-window" id="slotWindow">
+        <div class="slot-track" id="slotTrack"></div>
+        <div class="suspense-text" id="suspenseText"></div>
+      </div>
+      <div class="result-card" id="resultCard">
+        <span class="placeholder">點擊下方按鈕開始抽籤</span>
+      </div>
+
+      <div class="info-panel" id="infoPanel">
+        <div class="info-section" id="infoFood"></div>
+        <div class="info-section" id="infoSight"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="count-row">
+        <label for="drawCount">抽籤數量</label>
+        <select id="drawCount">
+          <option value="1" selected>1 站</option>
+          <option value="2">2 站</option>
+          <option value="3">3 站</option>
+          <option value="5">5 站</option>
+        </select>
+      </div>
+      <button class="btn-draw" id="btnDraw" onclick="startDraw()">開始抽籤</button>
+    </div>
+
+    <div class="history" id="historyWrap" style="display:none">
+      <h3>抽籤記錄</h3>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 右側地圖 ===== -->
+  <div id="map-wrap"><div id="map"></div></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ============================================================
+// Data
+// ============================================================
+const allStations  = [{"id": 1, "name": "基隆", "city": "基隆市", "line": "縱貫線", "express": true, "lat": 25.1316, "lng": 121.739}, {"id": 2, "name": "三坑", "city": "基隆市", "line": "縱貫線", "express": false, "lat": 25.122, "lng": 121.736}, {"id": 3, "name": "八堵", "city": "基隆市", "line": "縱貫線", "express": true, "lat": 25.1084, "lng": 121.7326}, {"id": 4, "name": "七堵", "city": "基隆市", "line": "縱貫線", "express": true, "lat": 25.093, "lng": 121.7133}, {"id": 5, "name": "百福", "city": "基隆市", "line": "縱貫線", "express": false, "lat": 25.083, "lng": 121.7}, {"id": 6, "name": "暖暖", "city": "基隆市", "line": "縱貫線", "express": false, "lat": 25.098, "lng": 121.744}, {"id": 7, "name": "海科館", "city": "基隆市", "line": "深澳線", "express": false, "lat": 25.137, "lng": 121.789}, {"id": 8, "name": "八斗子", "city": "基隆市", "line": "深澳線", "express": false, "lat": 25.138, "lng": 121.801}, {"id": 9, "name": "五堵", "city": "新北市", "line": "縱貫線", "express": false, "lat": 25.073, "lng": 121.672}, {"id": 10, "name": "汐止", "city": "新北市", "line": "縱貫線", "express": true, "lat": 25.063, "lng": 121.64}, {"id": 11, "name": "汐科", "city": "新北市", "line": "縱貫線", "express": false, "lat": 25.058, "lng": 121.623}, {"id": 12, "name": "板橋", "city": "新北市", "line": "縱貫線", "express": true, "lat": 25.0145, "lng": 121.4629}, {"id": 13, "name": "浮洲", "city": "新北市", "line": "縱貫線", "express": false, "lat": 25.003, "lng": 121.443}, {"id": 14, "name": "樹林", "city": "新北市", "line": "縱貫線", "express": true, "lat": 24.9913, "lng": 121.42}, {"id": 15, "name": "南樹林", "city": "新北市", "line": "縱貫線", "express": false, "lat": 24.984, "lng": 121.41}, {"id": 16, "name": "山佳", "city": "新北市", "line": "縱貫線", "express": false, "lat": 24.974, "lng": 121.395}, {"id": 17, "name": "鶯歌", "city": "新北市", "line": "縱貫線", "express": true, "lat": 24.9545, "lng": 121.353}, {"id": 18, "name": "鳳鳴", "city": "新北市", "line": "縱貫線", "express": false, "lat": 24.949, "lng": 121.34}, {"id": 19, "name": "四腳亭", "city": "新北市", "line": "宜蘭線", "express": true, "lat": 25.075, "lng": 121.768}, {"id": 20, "name": "瑞芳", "city": "新北市", "line": "宜蘭線", "express": true, "lat": 25.1086, "lng": 121.8068}, {"id": 21, "name": "猴硐", "city": "新北市", "line": "宜蘭線", "express": false, "lat": 25.087, "lng": 121.828}, {"id": 22, "name": "三貂嶺", "city": "新北市", "line": "宜蘭線", "express": false, "lat": 25.065, "lng": 121.84}, {"id": 23, "name": "牡丹", "city": "新北市", "line": "宜蘭線", "express": false, "lat": 25.045, "lng": 121.845}, {"id": 24, "name": "雙溪", "city": "新北市", "line": "宜蘭線", "express": true, "lat": 25.033, "lng": 121.867}, {"id": 25, "name": "貢寮", "city": "新北市", "line": "宜蘭線", "express": true, "lat": 25.023, "lng": 121.904}, {"id": 26, "name": "福隆", "city": "新北市", "line": "宜蘭線", "express": true, "lat": 25.017, "lng": 121.944}, {"id": 27, "name": "大華", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.05, "lng": 121.837}, {"id": 28, "name": "十分", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.042, "lng": 121.776}, {"id": 29, "name": "望古", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.038, "lng": 121.761}, {"id": 30, "name": "嶺腳", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.035, "lng": 121.749}, {"id": 31, "name": "平溪", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.026, "lng": 121.738}, {"id": 32, "name": "菁桐", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.024, "lng": 121.725}, {"id": 33, "name": "南港", "city": "臺北市", "line": "縱貫線", "express": true, "lat": 25.053, "lng": 121.6064}, {"id": 34, "name": "松山", "city": "臺北市", "line": "縱貫線", "express": true, "lat": 25.0496, "lng": 121.578}, {"id": 35, "name": "臺北", "city": "臺北市", "line": "縱貫線", "express": true, "lat": 25.0478, "lng": 121.517}, {"id": 36, "name": "萬華", "city": "臺北市", "line": "縱貫線", "express": true, "lat": 25.034, "lng": 121.5}, {"id": 37, "name": "桃園", "city": "桃園市", "line": "縱貫線", "express": true, "lat": 24.9893, "lng": 121.3133}, {"id": 38, "name": "內壢", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.97, "lng": 121.266}, {"id": 39, "name": "中壢", "city": "桃園市", "line": "縱貫線", "express": true, "lat": 24.9536, "lng": 121.2257}, {"id": 40, "name": "埔心", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.927, "lng": 121.182}, {"id": 41, "name": "楊梅", "city": "桃園市", "line": "縱貫線", "express": true, "lat": 24.912, "lng": 121.15}, {"id": 42, "name": "富岡", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.898, "lng": 121.12}, {"id": 43, "name": "新富", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.89, "lng": 121.105}, {"id": 44, "name": "北湖", "city": "新竹縣", "line": "縱貫線", "express": false, "lat": 24.88, "lng": 121.085}, {"id": 45, "name": "湖口", "city": "新竹縣", "line": "縱貫線", "express": true, "lat": 24.87, "lng": 121.06}, {"id": 46, "name": "新豐", "city": "新竹縣", "line": "縱貫線", "express": true, "lat": 24.845, "lng": 121.005}, {"id": 47, "name": "竹北", "city": "新竹縣", "line": "縱貫線", "express": true, "lat": 24.831, "lng": 120.993}, {"id": 48, "name": "竹中", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.781, "lng": 121.028}, {"id": 49, "name": "六家", "city": "新竹縣", "line": "六家線", "express": false, "lat": 24.787, "lng": 121.036}, {"id": 50, "name": "上員", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.765, "lng": 121.055}, {"id": 51, "name": "榮華", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.748, "lng": 121.078}, {"id": 52, "name": "竹東", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.733, "lng": 121.095}, {"id": 53, "name": "橫山", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.72, "lng": 121.115}, {"id": 54, "name": "九讚頭", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.71, "lng": 121.133}, {"id": 55, "name": "合興", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.702, "lng": 121.148}, {"id": 56, "name": "富貴", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.695, "lng": 121.163}, {"id": 57, "name": "內灣", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.693, "lng": 121.176}, {"id": 58, "name": "北新竹", "city": "新竹市", "line": "內灣線", "express": false, "lat": 24.806, "lng": 120.983}, {"id": 59, "name": "千甲", "city": "新竹市", "line": "內灣線", "express": false, "lat": 24.8, "lng": 120.998}, {"id": 60, "name": "新莊", "city": "新竹市", "line": "內灣線", "express": false, "lat": 24.795, "lng": 121.012}, {"id": 61, "name": "新竹", "city": "新竹市", "line": "縱貫線", "express": true, "lat": 24.8017, "lng": 120.9715}, {"id": 62, "name": "三姓橋", "city": "新竹市", "line": "縱貫線", "express": false, "lat": 24.784, "lng": 120.957}, {"id": 63, "name": "香山", "city": "新竹市", "line": "縱貫線", "express": false, "lat": 24.762, "lng": 120.93}, {"id": 64, "name": "崎頂", "city": "苗栗縣", "line": "縱貫線", "express": false, "lat": 24.725, "lng": 120.905}, {"id": 65, "name": "竹南", "city": "苗栗縣", "line": "縱貫線", "express": true, "lat": 24.685, "lng": 120.878}, {"id": 66, "name": "談文", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.666, "lng": 120.862}, {"id": 67, "name": "大山", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.645, "lng": 120.842}, {"id": 68, "name": "後龍", "city": "苗栗縣", "line": "海岸線", "express": true, "lat": 24.617, "lng": 120.793}, {"id": 69, "name": "龍港", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.601, "lng": 120.77}, {"id": 70, "name": "白沙屯", "city": "苗栗縣", "line": "海岸線", "express": true, "lat": 24.575, "lng": 120.736}, {"id": 71, "name": "新埔", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.557, "lng": 120.715}, {"id": 72, "name": "通霄", "city": "苗栗縣", "line": "海岸線", "express": true, "lat": 24.53, "lng": 120.696}, {"id": 73, "name": "苑裡", "city": "苗栗縣", "line": "海岸線", "express": true, "lat": 24.478, "lng": 120.677}, {"id": 74, "name": "造橋", "city": "苗栗縣", "line": "臺中線(山線)", "express": true, "lat": 24.643, "lng": 120.87}, {"id": 75, "name": "豐富", "city": "苗栗縣", "line": "臺中線(山線)", "express": false, "lat": 24.608, "lng": 120.84}, {"id": 76, "name": "苗栗", "city": "苗栗縣", "line": "臺中線(山線)", "express": true, "lat": 24.5704, "lng": 120.8236}, {"id": 77, "name": "南勢", "city": "苗栗縣", "line": "臺中線(山線)", "express": false, "lat": 24.545, "lng": 120.81}, {"id": 78, "name": "銅鑼", "city": "苗栗縣", "line": "臺中線(山線)", "express": true, "lat": 24.486, "lng": 120.788}, {"id": 79, "name": "三義", "city": "苗栗縣", "line": "臺中線(山線)", "express": true, "lat": 24.42, "lng": 120.762}, {"id": 80, "name": "日南", "city": "臺中市", "line": "海岸線", "express": false, "lat": 24.42, "lng": 120.66}, {"id": 81, "name": "大甲", "city": "臺中市", "line": "海岸線", "express": true, "lat": 24.384, "lng": 120.63}, {"id": 82, "name": "臺中港", "city": "臺中市", "line": "海岸線", "express": false, "lat": 24.353, "lng": 120.612}, {"id": 83, "name": "清水", "city": "臺中市", "line": "海岸線", "express": true, "lat": 24.32, "lng": 120.588}, {"id": 84, "name": "沙鹿", "city": "臺中市", "line": "海岸線", "express": true, "lat": 24.285, "lng": 120.572}, {"id": 85, "name": "龍井", "city": "臺中市", "line": "海岸線", "express": false, "lat": 24.248, "lng": 120.565}, {"id": 86, "name": "大肚", "city": "臺中市", "line": "海岸線", "express": true, "lat": 24.21, "lng": 120.558}, {"id": 87, "name": "追分", "city": "臺中市", "line": "海岸線", "express": true, "lat": 24.172, "lng": 120.553}, {"id": 88, "name": "泰安", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.355, "lng": 120.743}, {"id": 89, "name": "后里", "city": "臺中市", "line": "臺中線(山線)", "express": true, "lat": 24.308, "lng": 120.726}, {"id": 90, "name": "豐原", "city": "臺中市", "line": "臺中線(山線)", "express": true, "lat": 24.2542, "lng": 120.723}, {"id": 91, "name": "栗林", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.234, "lng": 120.712}, {"id": 92, "name": "潭子", "city": "臺中市", "line": "臺中線(山線)", "express": true, "lat": 24.214, "lng": 120.703}, {"id": 93, "name": "頭家厝", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.195, "lng": 120.697}, {"id": 94, "name": "松竹", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.181, "lng": 120.693}, {"id": 95, "name": "太原", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.168, "lng": 120.69}, {"id": 96, "name": "精武", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.153, "lng": 120.688}, {"id": 97, "name": "臺中", "city": "臺中市", "line": "臺中線(山線)", "express": true, "lat": 24.1368, "lng": 120.6869}, {"id": 98, "name": "五權", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.123, "lng": 120.679}, {"id": 99, "name": "大慶", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.11, "lng": 120.665}, {"id": 100, "name": "烏日", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.098, "lng": 120.623}, {"id": 101, "name": "新烏日", "city": "臺中市", "line": "臺中線(山線)", "express": true, "lat": 24.093, "lng": 120.613}, {"id": 102, "name": "成功", "city": "臺中市", "line": "臺中線(山線)", "express": true, "lat": 24.088, "lng": 120.58}, {"id": 103, "name": "彰化", "city": "彰化縣", "line": "縱貫線", "express": true, "lat": 24.0809, "lng": 120.5387}, {"id": 104, "name": "花壇", "city": "彰化縣", "line": "縱貫線", "express": false, "lat": 24.04, "lng": 120.552}, {"id": 105, "name": "大村", "city": "彰化縣", "line": "縱貫線", "express": false, "lat": 24.007, "lng": 120.563}, {"id": 106, "name": "員林", "city": "彰化縣", "line": "縱貫線", "express": true, "lat": 23.9573, "lng": 120.5696}, {"id": 107, "name": "永靖", "city": "彰化縣", "line": "縱貫線", "express": false, "lat": 23.925, "lng": 120.565}, {"id": 108, "name": "社頭", "city": "彰化縣", "line": "縱貫線", "express": true, "lat": 23.895, "lng": 120.56}, {"id": 109, "name": "田中", "city": "彰化縣", "line": "縱貫線", "express": true, "lat": 23.863, "lng": 120.582}, {"id": 110, "name": "二水", "city": "彰化縣", "line": "縱貫線", "express": true, "lat": 23.817, "lng": 120.618}, {"id": 111, "name": "源泉", "city": "彰化縣", "line": "集集線", "express": false, "lat": 23.812, "lng": 120.635}, {"id": 112, "name": "濁水", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.829, "lng": 120.68}, {"id": 113, "name": "龍泉", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.833, "lng": 120.723}, {"id": 114, "name": "集集", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.827, "lng": 120.749}, {"id": 115, "name": "水里", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.822, "lng": 120.804}, {"id": 116, "name": "車埕", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.833, "lng": 120.837}, {"id": 117, "name": "林內", "city": "雲林縣", "line": "縱貫線", "express": true, "lat": 23.767, "lng": 120.611}, {"id": 118, "name": "石榴", "city": "雲林縣", "line": "縱貫線", "express": false, "lat": 23.743, "lng": 120.588}, {"id": 119, "name": "斗六", "city": "雲林縣", "line": "縱貫線", "express": true, "lat": 23.7076, "lng": 120.5431}, {"id": 120, "name": "斗南", "city": "雲林縣", "line": "縱貫線", "express": true, "lat": 23.663, "lng": 120.482}, {"id": 121, "name": "石龜", "city": "雲林縣", "line": "縱貫線", "express": false, "lat": 23.635, "lng": 120.47}, {"id": 122, "name": "大林", "city": "嘉義縣", "line": "縱貫線", "express": true, "lat": 23.603, "lng": 120.463}, {"id": 123, "name": "民雄", "city": "嘉義縣", "line": "縱貫線", "express": true, "lat": 23.553, "lng": 120.445}, {"id": 124, "name": "水上", "city": "嘉義縣", "line": "縱貫線", "express": false, "lat": 23.433, "lng": 120.398}, {"id": 125, "name": "南靖", "city": "嘉義縣", "line": "縱貫線", "express": false, "lat": 23.404, "lng": 120.383}, {"id": 126, "name": "嘉北", "city": "嘉義市", "line": "縱貫線", "express": false, "lat": 23.498, "lng": 120.439}, {"id": 127, "name": "嘉義", "city": "嘉義市", "line": "縱貫線", "express": true, "lat": 23.4792, "lng": 120.441}, {"id": 128, "name": "後壁", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.365, "lng": 120.359}, {"id": 129, "name": "新營", "city": "臺南市", "line": "縱貫線", "express": true, "lat": 23.3074, "lng": 120.3166}, {"id": 130, "name": "柳營", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.278, "lng": 120.308}, {"id": 131, "name": "林鳳營", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.254, "lng": 120.302}, {"id": 132, "name": "隆田", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.215, "lng": 120.295}, {"id": 133, "name": "拔林", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.193, "lng": 120.28}, {"id": 134, "name": "善化", "city": "臺南市", "line": "縱貫線", "express": true, "lat": 23.165, "lng": 120.272}, {"id": 135, "name": "南科", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.12, "lng": 120.27}, {"id": 136, "name": "新市", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.09, "lng": 120.266}, {"id": 137, "name": "永康", "city": "臺南市", "line": "縱貫線", "express": true, "lat": 23.045, "lng": 120.247}, {"id": 138, "name": "大橋", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.02, "lng": 120.232}, {"id": 139, "name": "臺南", "city": "臺南市", "line": "縱貫線", "express": true, "lat": 22.9971, "lng": 120.2129}, {"id": 140, "name": "保安", "city": "臺南市", "line": "縱貫線", "express": true, "lat": 22.965, "lng": 120.21}, {"id": 141, "name": "仁德", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 22.94, "lng": 120.225}, {"id": 142, "name": "中洲", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 22.918, "lng": 120.233}, {"id": 143, "name": "長榮大學", "city": "臺南市", "line": "沙崙線", "express": false, "lat": 22.932, "lng": 120.256}, {"id": 144, "name": "沙崙", "city": "臺南市", "line": "沙崙線", "express": false, "lat": 22.922, "lng": 120.277}, {"id": 145, "name": "大湖", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.883, "lng": 120.262}, {"id": 146, "name": "路竹", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.857, "lng": 120.275}, {"id": 147, "name": "岡山", "city": "高雄市", "line": "縱貫線", "express": true, "lat": 22.7956, "lng": 120.2954}, {"id": 148, "name": "橋頭", "city": "高雄市", "line": "縱貫線", "express": true, "lat": 22.755, "lng": 120.298}, {"id": 149, "name": "楠梓", "city": "高雄市", "line": "縱貫線", "express": true, "lat": 22.727, "lng": 120.3}, {"id": 150, "name": "新左營", "city": "高雄市", "line": "縱貫線", "express": true, "lat": 22.688, "lng": 120.308}, {"id": 151, "name": "左營(舊城)", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.672, "lng": 120.308}, {"id": 152, "name": "內惟", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.659, "lng": 120.304}, {"id": 153, "name": "美術館", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.651, "lng": 120.302}, {"id": 154, "name": "鼓山", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.645, "lng": 120.3}, {"id": 155, "name": "三塊厝", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.642, "lng": 120.302}, {"id": 156, "name": "高雄", "city": "高雄市", "line": "縱貫線", "express": true, "lat": 22.6395, "lng": 120.3025}, {"id": 157, "name": "民族", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.637, "lng": 120.308}, {"id": 158, "name": "科工館", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.635, "lng": 120.316}, {"id": 159, "name": "正義", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.631, "lng": 120.325}, {"id": 160, "name": "鳳山", "city": "高雄市", "line": "屏東線", "express": true, "lat": 22.6266, "lng": 120.344}, {"id": 161, "name": "後庄", "city": "高雄市", "line": "屏東線", "express": true, "lat": 22.623, "lng": 120.362}, {"id": 162, "name": "九曲堂", "city": "高雄市", "line": "屏東線", "express": true, "lat": 22.618, "lng": 120.381}, {"id": 163, "name": "六塊厝", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.637, "lng": 120.44}, {"id": 164, "name": "屏東", "city": "屏東縣", "line": "屏東線", "express": true, "lat": 22.6694, "lng": 120.4862}, {"id": 165, "name": "歸來", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.66, "lng": 120.498}, {"id": 166, "name": "麟洛", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.643, "lng": 120.515}, {"id": 167, "name": "西勢", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.623, "lng": 120.525}, {"id": 168, "name": "竹田", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.597, "lng": 120.53}, {"id": 169, "name": "潮州", "city": "屏東縣", "line": "屏東線", "express": true, "lat": 22.5515, "lng": 120.5322}, {"id": 170, "name": "崁頂", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.515, "lng": 120.54}, {"id": 171, "name": "南州", "city": "屏東縣", "line": "屏東線", "express": true, "lat": 22.488, "lng": 120.545}, {"id": 172, "name": "鎮安", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.465, "lng": 120.548}, {"id": 173, "name": "林邊", "city": "屏東縣", "line": "屏東線", "express": true, "lat": 22.44, "lng": 120.552}, {"id": 174, "name": "佳冬", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.418, "lng": 120.562}, {"id": 175, "name": "東海", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.398, "lng": 120.573}, {"id": 176, "name": "枋寮", "city": "屏東縣", "line": "屏東線", "express": true, "lat": 22.3734, "lng": 120.5938}, {"id": 177, "name": "加祿", "city": "屏東縣", "line": "南迴線", "express": true, "lat": 22.353, "lng": 120.608}, {"id": 178, "name": "內獅", "city": "屏東縣", "line": "南迴線", "express": false, "lat": 22.322, "lng": 120.628}, {"id": 179, "name": "枋山", "city": "屏東縣", "line": "南迴線", "express": false, "lat": 22.264, "lng": 120.652}, {"id": 180, "name": "大武", "city": "臺東縣", "line": "南迴線", "express": true, "lat": 22.354, "lng": 120.8911}, {"id": 181, "name": "瀧溪", "city": "臺東縣", "line": "南迴線", "express": false, "lat": 22.423, "lng": 120.945}, {"id": 182, "name": "金崙", "city": "臺東縣", "line": "南迴線", "express": true, "lat": 22.508, "lng": 120.98}, {"id": 183, "name": "太麻里", "city": "臺東縣", "line": "南迴線", "express": true, "lat": 22.6151, "lng": 121.0053}, {"id": 184, "name": "知本", "city": "臺東縣", "line": "南迴線", "express": true, "lat": 22.712, "lng": 121.057}, {"id": 185, "name": "康樂", "city": "臺東縣", "line": "南迴線", "express": true, "lat": 22.758, "lng": 121.09}, {"id": 186, "name": "臺東", "city": "臺東縣", "line": "臺東線", "express": true, "lat": 22.793, "lng": 121.1234}, {"id": 187, "name": "山里", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 22.832, "lng": 121.118}, {"id": 188, "name": "鹿野", "city": "臺東縣", "line": "臺東線", "express": true, "lat": 22.913, "lng": 121.135}, {"id": 189, "name": "瑞源", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 22.945, "lng": 121.152}, {"id": 190, "name": "瑞和", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 22.975, "lng": 121.167}, {"id": 191, "name": "關山", "city": "臺東縣", "line": "臺東線", "express": true, "lat": 23.05, "lng": 121.186}, {"id": 192, "name": "海端", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 23.07, "lng": 121.195}, {"id": 193, "name": "池上", "city": "臺東縣", "line": "臺東線", "express": true, "lat": 23.097, "lng": 121.219}, {"id": 194, "name": "富里", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.177, "lng": 121.248}, {"id": 195, "name": "東竹", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.215, "lng": 121.265}, {"id": 196, "name": "東里", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.27, "lng": 121.283}, {"id": 197, "name": "玉里", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.3349, "lng": 121.3135}, {"id": 198, "name": "三民", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.402, "lng": 121.323}, {"id": 199, "name": "瑞穗", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.497, "lng": 121.368}, {"id": 200, "name": "富源", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.56, "lng": 121.383}, {"id": 201, "name": "大富", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.608, "lng": 121.395}, {"id": 202, "name": "光復", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.645, "lng": 121.418}, {"id": 203, "name": "萬榮", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.688, "lng": 121.43}, {"id": 204, "name": "鳳林", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.743, "lng": 121.455}, {"id": 205, "name": "南平", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.778, "lng": 121.473}, {"id": 206, "name": "林榮新光", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.8, "lng": 121.485}, {"id": 207, "name": "豐田", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.837, "lng": 121.505}, {"id": 208, "name": "壽豐", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.87, "lng": 121.525}, {"id": 209, "name": "平和", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.895, "lng": 121.538}, {"id": 210, "name": "志學", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.915, "lng": 121.553}, {"id": 211, "name": "吉安", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.955, "lng": 121.58}, {"id": 212, "name": "花蓮", "city": "花蓮縣", "line": "臺東線", "express": true, "lat": 23.9936, "lng": 121.6013}, {"id": 213, "name": "北埔", "city": "花蓮縣", "line": "北迴線", "express": true, "lat": 24.013, "lng": 121.607}, {"id": 214, "name": "景美", "city": "花蓮縣", "line": "北迴線", "express": false, "lat": 24.068, "lng": 121.612}, {"id": 215, "name": "新城(太魯閣)", "city": "花蓮縣", "line": "北迴線", "express": true, "lat": 24.1276, "lng": 121.6216}, {"id": 216, "name": "崇德", "city": "花蓮縣", "line": "北迴線", "express": false, "lat": 24.173, "lng": 121.633}, {"id": 217, "name": "和仁", "city": "花蓮縣", "line": "北迴線", "express": false, "lat": 24.228, "lng": 121.678}, {"id": 218, "name": "和平", "city": "花蓮縣", "line": "北迴線", "express": true, "lat": 24.298, "lng": 121.751}, {"id": 219, "name": "漢本", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.358, "lng": 121.768}, {"id": 220, "name": "武塔", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.413, "lng": 121.783}, {"id": 221, "name": "南澳", "city": "宜蘭縣", "line": "北迴線", "express": true, "lat": 24.458, "lng": 121.8}, {"id": 222, "name": "東澳", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.508, "lng": 121.827}, {"id": 223, "name": "永樂", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.528, "lng": 121.84}, {"id": 224, "name": "蘇澳", "city": "宜蘭縣", "line": "北迴線", "express": true, "lat": 24.578, "lng": 121.855}, {"id": 225, "name": "蘇澳新", "city": "宜蘭縣", "line": "北迴線", "express": true, "lat": 24.596, "lng": 121.858}, {"id": 226, "name": "新馬", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.618, "lng": 121.86}, {"id": 227, "name": "冬山", "city": "宜蘭縣", "line": "宜蘭線", "express": true, "lat": 24.635, "lng": 121.792}, {"id": 228, "name": "羅東", "city": "宜蘭縣", "line": "宜蘭線", "express": true, "lat": 24.6764, "lng": 121.7705}, {"id": 229, "name": "中里", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.7, "lng": 121.765}, {"id": 230, "name": "二結", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.714, "lng": 121.763}, {"id": 231, "name": "宜蘭", "city": "宜蘭縣", "line": "宜蘭線", "express": true, "lat": 24.7579, "lng": 121.7583}, {"id": 232, "name": "四城", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.782, "lng": 121.755}, {"id": 233, "name": "礁溪", "city": "宜蘭縣", "line": "宜蘭線", "express": true, "lat": 24.807, "lng": 121.767}, {"id": 234, "name": "頂埔", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.828, "lng": 121.778}, {"id": 235, "name": "頭城", "city": "宜蘭縣", "line": "宜蘭線", "express": true, "lat": 24.8593, "lng": 121.823}, {"id": 236, "name": "外澳", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.88, "lng": 121.843}, {"id": 237, "name": "龜山", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.903, "lng": 121.861}, {"id": 238, "name": "大溪", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.93, "lng": 121.866}, {"id": 239, "name": "大里", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.96, "lng": 121.871}, {"id": 240, "name": "石城", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.985, "lng": 121.878}, {"id": 241, "name": "花蓮港", "city": "花蓮縣", "line": "花蓮臨港線", "express": false, "lat": 23.979, "lng": 121.615}];
+const candidates   = [{"id": 2, "name": "三坑", "city": "基隆市", "line": "縱貫線", "express": false, "lat": 25.122, "lng": 121.736}, {"id": 5, "name": "百福", "city": "基隆市", "line": "縱貫線", "express": false, "lat": 25.083, "lng": 121.7}, {"id": 6, "name": "暖暖", "city": "基隆市", "line": "縱貫線", "express": false, "lat": 25.098, "lng": 121.744}, {"id": 7, "name": "海科館", "city": "基隆市", "line": "深澳線", "express": false, "lat": 25.137, "lng": 121.789}, {"id": 8, "name": "八斗子", "city": "基隆市", "line": "深澳線", "express": false, "lat": 25.138, "lng": 121.801}, {"id": 9, "name": "五堵", "city": "新北市", "line": "縱貫線", "express": false, "lat": 25.073, "lng": 121.672}, {"id": 11, "name": "汐科", "city": "新北市", "line": "縱貫線", "express": false, "lat": 25.058, "lng": 121.623}, {"id": 13, "name": "浮洲", "city": "新北市", "line": "縱貫線", "express": false, "lat": 25.003, "lng": 121.443}, {"id": 15, "name": "南樹林", "city": "新北市", "line": "縱貫線", "express": false, "lat": 24.984, "lng": 121.41}, {"id": 16, "name": "山佳", "city": "新北市", "line": "縱貫線", "express": false, "lat": 24.974, "lng": 121.395}, {"id": 18, "name": "鳳鳴", "city": "新北市", "line": "縱貫線", "express": false, "lat": 24.949, "lng": 121.34}, {"id": 21, "name": "猴硐", "city": "新北市", "line": "宜蘭線", "express": false, "lat": 25.087, "lng": 121.828}, {"id": 22, "name": "三貂嶺", "city": "新北市", "line": "宜蘭線", "express": false, "lat": 25.065, "lng": 121.84}, {"id": 23, "name": "牡丹", "city": "新北市", "line": "宜蘭線", "express": false, "lat": 25.045, "lng": 121.845}, {"id": 27, "name": "大華", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.05, "lng": 121.837}, {"id": 28, "name": "十分", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.042, "lng": 121.776}, {"id": 29, "name": "望古", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.038, "lng": 121.761}, {"id": 30, "name": "嶺腳", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.035, "lng": 121.749}, {"id": 31, "name": "平溪", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.026, "lng": 121.738}, {"id": 32, "name": "菁桐", "city": "新北市", "line": "平溪線", "express": false, "lat": 25.024, "lng": 121.725}, {"id": 38, "name": "內壢", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.97, "lng": 121.266}, {"id": 40, "name": "埔心", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.927, "lng": 121.182}, {"id": 42, "name": "富岡", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.898, "lng": 121.12}, {"id": 43, "name": "新富", "city": "桃園市", "line": "縱貫線", "express": false, "lat": 24.89, "lng": 121.105}, {"id": 44, "name": "北湖", "city": "新竹縣", "line": "縱貫線", "express": false, "lat": 24.88, "lng": 121.085}, {"id": 48, "name": "竹中", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.781, "lng": 121.028}, {"id": 49, "name": "六家", "city": "新竹縣", "line": "六家線", "express": false, "lat": 24.787, "lng": 121.036}, {"id": 50, "name": "上員", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.765, "lng": 121.055}, {"id": 51, "name": "榮華", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.748, "lng": 121.078}, {"id": 52, "name": "竹東", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.733, "lng": 121.095}, {"id": 53, "name": "橫山", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.72, "lng": 121.115}, {"id": 54, "name": "九讚頭", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.71, "lng": 121.133}, {"id": 55, "name": "合興", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.702, "lng": 121.148}, {"id": 56, "name": "富貴", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.695, "lng": 121.163}, {"id": 57, "name": "內灣", "city": "新竹縣", "line": "內灣線", "express": false, "lat": 24.693, "lng": 121.176}, {"id": 58, "name": "北新竹", "city": "新竹市", "line": "內灣線", "express": false, "lat": 24.806, "lng": 120.983}, {"id": 59, "name": "千甲", "city": "新竹市", "line": "內灣線", "express": false, "lat": 24.8, "lng": 120.998}, {"id": 60, "name": "新莊", "city": "新竹市", "line": "內灣線", "express": false, "lat": 24.795, "lng": 121.012}, {"id": 62, "name": "三姓橋", "city": "新竹市", "line": "縱貫線", "express": false, "lat": 24.784, "lng": 120.957}, {"id": 63, "name": "香山", "city": "新竹市", "line": "縱貫線", "express": false, "lat": 24.762, "lng": 120.93}, {"id": 64, "name": "崎頂", "city": "苗栗縣", "line": "縱貫線", "express": false, "lat": 24.725, "lng": 120.905}, {"id": 66, "name": "談文", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.666, "lng": 120.862}, {"id": 67, "name": "大山", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.645, "lng": 120.842}, {"id": 69, "name": "龍港", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.601, "lng": 120.77}, {"id": 71, "name": "新埔", "city": "苗栗縣", "line": "海岸線", "express": false, "lat": 24.557, "lng": 120.715}, {"id": 75, "name": "豐富", "city": "苗栗縣", "line": "臺中線(山線)", "express": false, "lat": 24.608, "lng": 120.84}, {"id": 77, "name": "南勢", "city": "苗栗縣", "line": "臺中線(山線)", "express": false, "lat": 24.545, "lng": 120.81}, {"id": 80, "name": "日南", "city": "臺中市", "line": "海岸線", "express": false, "lat": 24.42, "lng": 120.66}, {"id": 82, "name": "臺中港", "city": "臺中市", "line": "海岸線", "express": false, "lat": 24.353, "lng": 120.612}, {"id": 85, "name": "龍井", "city": "臺中市", "line": "海岸線", "express": false, "lat": 24.248, "lng": 120.565}, {"id": 88, "name": "泰安", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.355, "lng": 120.743}, {"id": 91, "name": "栗林", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.234, "lng": 120.712}, {"id": 93, "name": "頭家厝", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.195, "lng": 120.697}, {"id": 94, "name": "松竹", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.181, "lng": 120.693}, {"id": 95, "name": "太原", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.168, "lng": 120.69}, {"id": 96, "name": "精武", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.153, "lng": 120.688}, {"id": 98, "name": "五權", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.123, "lng": 120.679}, {"id": 99, "name": "大慶", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.11, "lng": 120.665}, {"id": 100, "name": "烏日", "city": "臺中市", "line": "臺中線(山線)", "express": false, "lat": 24.098, "lng": 120.623}, {"id": 104, "name": "花壇", "city": "彰化縣", "line": "縱貫線", "express": false, "lat": 24.04, "lng": 120.552}, {"id": 105, "name": "大村", "city": "彰化縣", "line": "縱貫線", "express": false, "lat": 24.007, "lng": 120.563}, {"id": 107, "name": "永靖", "city": "彰化縣", "line": "縱貫線", "express": false, "lat": 23.925, "lng": 120.565}, {"id": 111, "name": "源泉", "city": "彰化縣", "line": "集集線", "express": false, "lat": 23.812, "lng": 120.635}, {"id": 112, "name": "濁水", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.829, "lng": 120.68}, {"id": 113, "name": "龍泉", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.833, "lng": 120.723}, {"id": 114, "name": "集集", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.827, "lng": 120.749}, {"id": 115, "name": "水里", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.822, "lng": 120.804}, {"id": 116, "name": "車埕", "city": "南投縣", "line": "集集線", "express": false, "lat": 23.833, "lng": 120.837}, {"id": 118, "name": "石榴", "city": "雲林縣", "line": "縱貫線", "express": false, "lat": 23.743, "lng": 120.588}, {"id": 121, "name": "石龜", "city": "雲林縣", "line": "縱貫線", "express": false, "lat": 23.635, "lng": 120.47}, {"id": 124, "name": "水上", "city": "嘉義縣", "line": "縱貫線", "express": false, "lat": 23.433, "lng": 120.398}, {"id": 125, "name": "南靖", "city": "嘉義縣", "line": "縱貫線", "express": false, "lat": 23.404, "lng": 120.383}, {"id": 126, "name": "嘉北", "city": "嘉義市", "line": "縱貫線", "express": false, "lat": 23.498, "lng": 120.439}, {"id": 128, "name": "後壁", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.365, "lng": 120.359}, {"id": 130, "name": "柳營", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.278, "lng": 120.308}, {"id": 131, "name": "林鳳營", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.254, "lng": 120.302}, {"id": 132, "name": "隆田", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.215, "lng": 120.295}, {"id": 133, "name": "拔林", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.193, "lng": 120.28}, {"id": 135, "name": "南科", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.12, "lng": 120.27}, {"id": 136, "name": "新市", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.09, "lng": 120.266}, {"id": 138, "name": "大橋", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 23.02, "lng": 120.232}, {"id": 141, "name": "仁德", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 22.94, "lng": 120.225}, {"id": 142, "name": "中洲", "city": "臺南市", "line": "縱貫線", "express": false, "lat": 22.918, "lng": 120.233}, {"id": 143, "name": "長榮大學", "city": "臺南市", "line": "沙崙線", "express": false, "lat": 22.932, "lng": 120.256}, {"id": 144, "name": "沙崙", "city": "臺南市", "line": "沙崙線", "express": false, "lat": 22.922, "lng": 120.277}, {"id": 145, "name": "大湖", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.883, "lng": 120.262}, {"id": 146, "name": "路竹", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.857, "lng": 120.275}, {"id": 151, "name": "左營(舊城)", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.672, "lng": 120.308}, {"id": 152, "name": "內惟", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.659, "lng": 120.304}, {"id": 153, "name": "美術館", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.651, "lng": 120.302}, {"id": 154, "name": "鼓山", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.645, "lng": 120.3}, {"id": 155, "name": "三塊厝", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.642, "lng": 120.302}, {"id": 157, "name": "民族", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.637, "lng": 120.308}, {"id": 158, "name": "科工館", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.635, "lng": 120.316}, {"id": 159, "name": "正義", "city": "高雄市", "line": "縱貫線", "express": false, "lat": 22.631, "lng": 120.325}, {"id": 163, "name": "六塊厝", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.637, "lng": 120.44}, {"id": 165, "name": "歸來", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.66, "lng": 120.498}, {"id": 166, "name": "麟洛", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.643, "lng": 120.515}, {"id": 167, "name": "西勢", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.623, "lng": 120.525}, {"id": 168, "name": "竹田", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.597, "lng": 120.53}, {"id": 170, "name": "崁頂", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.515, "lng": 120.54}, {"id": 172, "name": "鎮安", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.465, "lng": 120.548}, {"id": 174, "name": "佳冬", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.418, "lng": 120.562}, {"id": 175, "name": "東海", "city": "屏東縣", "line": "屏東線", "express": false, "lat": 22.398, "lng": 120.573}, {"id": 178, "name": "內獅", "city": "屏東縣", "line": "南迴線", "express": false, "lat": 22.322, "lng": 120.628}, {"id": 179, "name": "枋山", "city": "屏東縣", "line": "南迴線", "express": false, "lat": 22.264, "lng": 120.652}, {"id": 181, "name": "瀧溪", "city": "臺東縣", "line": "南迴線", "express": false, "lat": 22.423, "lng": 120.945}, {"id": 187, "name": "山里", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 22.832, "lng": 121.118}, {"id": 189, "name": "瑞源", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 22.945, "lng": 121.152}, {"id": 190, "name": "瑞和", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 22.975, "lng": 121.167}, {"id": 192, "name": "海端", "city": "臺東縣", "line": "臺東線", "express": false, "lat": 23.07, "lng": 121.195}, {"id": 195, "name": "東竹", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.215, "lng": 121.265}, {"id": 196, "name": "東里", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.27, "lng": 121.283}, {"id": 198, "name": "三民", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.402, "lng": 121.323}, {"id": 200, "name": "富源", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.56, "lng": 121.383}, {"id": 201, "name": "大富", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.608, "lng": 121.395}, {"id": 203, "name": "萬榮", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.688, "lng": 121.43}, {"id": 205, "name": "南平", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.778, "lng": 121.473}, {"id": 207, "name": "豐田", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.837, "lng": 121.505}, {"id": 209, "name": "平和", "city": "花蓮縣", "line": "臺東線", "express": false, "lat": 23.895, "lng": 121.538}, {"id": 214, "name": "景美", "city": "花蓮縣", "line": "北迴線", "express": false, "lat": 24.068, "lng": 121.612}, {"id": 216, "name": "崇德", "city": "花蓮縣", "line": "北迴線", "express": false, "lat": 24.173, "lng": 121.633}, {"id": 217, "name": "和仁", "city": "花蓮縣", "line": "北迴線", "express": false, "lat": 24.228, "lng": 121.678}, {"id": 219, "name": "漢本", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.358, "lng": 121.768}, {"id": 220, "name": "武塔", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.413, "lng": 121.783}, {"id": 222, "name": "東澳", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.508, "lng": 121.827}, {"id": 223, "name": "永樂", "city": "宜蘭縣", "line": "北迴線", "express": false, "lat": 24.528, "lng": 121.84}, {"id": 226, "name": "新馬", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.618, "lng": 121.86}, {"id": 229, "name": "中里", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.7, "lng": 121.765}, {"id": 230, "name": "二結", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.714, "lng": 121.763}, {"id": 232, "name": "四城", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.782, "lng": 121.755}, {"id": 234, "name": "頂埔", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.828, "lng": 121.778}, {"id": 236, "name": "外澳", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.88, "lng": 121.843}, {"id": 237, "name": "龜山", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.903, "lng": 121.861}, {"id": 238, "name": "大溪", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.93, "lng": 121.866}, {"id": 239, "name": "大里", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.96, "lng": 121.871}, {"id": 240, "name": "石城", "city": "宜蘭縣", "line": "宜蘭線", "express": false, "lat": 24.985, "lng": 121.878}, {"id": 241, "name": "花蓮港", "city": "花蓮縣", "line": "花蓮臨港線", "express": false, "lat": 23.979, "lng": 121.615}];
+const expressStations = allStations.filter(s => s.express);
+const stationInfo = {"三坑": {"food": ["三坑老街米粉湯", "基隆廟口鄰近小吃", "三坑在地排骨飯"], "sight": ["三坑老街散步", "基隆河畔自行車道", "獅球嶺隧道"]}, "百福": {"food": ["百福社區麵店", "七堵咖哩飯", "七堵鐵路便當"], "sight": ["百福公園", "瑪陵坑溪生態", "七堵鐵道紀念公園"]}, "暖暖": {"food": ["暖暖老街小吃", "暖暖碳烤三明治", "阿嬌老店切仔麵"], "sight": ["暖暖親水公園", "暖東峽谷步道", "西勢水庫"]}, "海科館": {"food": ["八斗子海鮮餐廳", "漁港現炸天婦羅", "小卷米粉"], "sight": ["國立海洋科技博物館", "潮境公園", "望幽谷步道"]}, "八斗子": {"food": ["八斗子漁港海鮮", "飛魚卵香腸", "鬼頭刀魚排"], "sight": ["八斗子車站海景月台", "望幽谷", "潮境公園巨型掃把裝置藝術"]}, "五堵": {"food": ["汐止老街肉羹", "五堵在地麵攤", "北港鹹粥"], "sight": ["星光橋", "新山夢湖步道", "五堵隧道自行車道"]}, "汐科": {"food": ["汐科商圈便當街", "韓式料理聚集區", "遠雄百貨美食街"], "sight": ["遠雄購物中心", "基隆河自行車道", "白雲公園"]}, "浮洲": {"food": ["板橋湳雅夜市", "浮洲圓環豆花", "在地越南河粉"], "sight": ["浮洲藝術河濱公園", "板橋435藝文特區", "溪北公園"]}, "南樹林": {"food": ["樹林興仁花園夜市", "紅燒鰻魚羹", "樹林肉圓"], "sight": ["鹿角溪人工溼地", "山佳百年車站步行可達", "大同山登山步道"]}, "山佳": {"food": ["山佳車站旁古早味冰店", "樹林排骨酥麵", "山佳老街碗粿"], "sight": ["山佳百年車站（古蹟）", "大棟山觀景台", "鹿角溪人工溼地"]}, "鳳鳴": {"food": ["鶯歌老街伴手禮", "厚道飲食店古早味便當", "阿婆壽司"], "sight": ["鶯歌陶瓷博物館", "鶯歌老街", "三鶯藝術村"]}, "內壢": {"food": ["內壢黃昏市場小吃", "阿霞粉圓冰", "內壢火車站旁滷肉飯"], "sight": ["元智大學校園", "忠孝公園", "內壢老街區"]}, "埔心": {"food": ["埔心牧場旁餐廳", "客家粄條", "楊梅富岡老街小吃"], "sight": ["埔心牧場", "楊梅故事館", "秀才登山步道"]}, "富岡": {"food": ["富岡老街客家菜包", "富岡市場油飯", "客家鹹豬肉"], "sight": ["富岡老街日式建築群", "伯公岡公園", "富岡運動公園"]}, "新富": {"food": ["富岡老街碗粿", "客家粢粑", "在地客家小炒"], "sight": ["新富車站田園風光", "湖口老街（鄰近）", "新豐紅毛港"]}, "北湖": {"food": ["湖口老街手工麵線", "湖口大鍋牛肉麵", "客家擂茶"], "sight": ["湖口老街", "湖口好客文創園區", "金獅寺步道"]}, "竹中": {"food": ["竹東客家粄條", "中央市場米粉", "客家菜包"], "sight": ["竹中車站鐵道風光", "高鐵新竹站（六家線轉乘）", "頭前溪生態"]}, "六家": {"food": ["高鐵站區美食街", "竹北光明商圈小吃", "新竹米粉"], "sight": ["高鐵新竹站", "六家古厝群", "竹北水圳森林公園"]}, "上員": {"food": ["竹東市場客家菜", "上員在地麵店", "客家草仔粿"], "sight": ["上員崎頂步道", "頭前溪自行車道", "竹東圳"]}, "榮華": {"food": ["竹東中央市場小吃", "客家鹹湯圓", "薑絲大腸"], "sight": ["竹東動漫園區", "蕭如松藝術園區", "五指山登山口"]}, "竹東": {"food": ["竹東中央市場粄條", "竹東排骨酥麵", "客家菜包阿金姐"], "sight": ["竹東文創藝術村", "蕭如松藝術園區", "軟橋彩繪村"]}, "橫山": {"food": ["橫山在地客家小吃", "野薑花粽子", "客家擂茶"], "sight": ["大山背人文生態館", "騎龍古道", "橫山大山背休閒農業區"]}, "九讚頭": {"food": ["內灣野薑花粽", "客家鹹湯圓", "山產野菜"], "sight": ["九讚頭文化協會", "內灣老街（鄰近）", "合興愛情車站（鄰近）"]}, "合興": {"food": ["合興車站旁愛情飲品店", "內灣老街粄條", "野薑花粽"], "sight": ["合興愛情車站", "薰衣草森林（鄰近）", "愛情候車亭裝置藝術"]}, "富貴": {"food": ["內灣客家菜", "山豬肉香腸", "客家擂茶"], "sight": ["富貴車站山林風光", "內灣吊橋（鄰近）", "油羅溪谷"]}, "內灣": {"food": ["內灣老街野薑花粽", "客家粄條", "劉興欽漫畫餐廳"], "sight": ["內灣老街", "內灣吊橋", "內灣戲院（懷舊電影院）"]}, "北新竹": {"food": ["新竹城隍廟口肉圓", "鴨肉許", "新竹米粉"], "sight": ["新竹護城河親水公園", "新竹美術館", "東門城"]}, "千甲": {"food": ["千甲部落農產品", "在地原住民風味餐", "新竹客家美食"], "sight": ["千甲聚落（里山生活）", "世博台灣館", "關東橋商圈"]}, "新莊": {"food": ["新竹關東橋小吃", "清大夜市", "科學園區便當街"], "sight": ["新竹科學園區", "交通大學校園", "十八尖山步道"]}, "三姓橋": {"food": ["新竹南寮漁港海鮮", "香山甕仔雞", "三姓橋在地小吃"], "sight": ["香山濕地賞蟹步道", "南寮漁港", "青青草原溜滑梯"]}, "香山": {"food": ["香山甕仔雞", "海鮮快炒", "香山市場在地小吃"], "sight": ["香山濕地", "青青草原", "香山天后宮"]}, "崎頂": {"food": ["崎頂小吃攤", "竹南在地米粉", "竹南市場花枝羹"], "sight": ["崎頂子母隧道", "崎頂觀景台看海", "崎頂海水浴場"]}, "談文": {"food": ["談文在地小吃", "後龍黑輪伯", "後龍杏仁露"], "sight": ["談文車站（木造老站房）", "好望角風景區（鄰近）", "談文溪口"]}, "大山": {"food": ["後龍小吃", "客家米食", "在地花生糖"], "sight": ["大山車站（日式木造站房）", "後龍好望角", "過港貝化石層"]}, "龍港": {"food": ["後龍海鮮", "龍港漁村小吃", "外埔漁港海產"], "sight": ["好望角觀景步道", "外埔漁港", "後龍鎮海宮"]}, "新埔": {"food": ["通霄海鮮快炒", "白沙屯媽祖廟旁小吃", "手工豆花"], "sight": ["新埔車站（木造老站）", "秋茂園", "通霄海水浴場"]}, "豐富": {"food": ["苗栗客家湯圓", "苗栗市場肉圓", "苗栗餡餅"], "sight": ["客家圓樓", "苗栗高鐵站區", "貓裏客家學苑"]}, "南勢": {"food": ["苗栗市場小吃", "客家粄條", "苗栗肉圓"], "sight": ["功維敘隧道（七彩燈光）", "南勢溪步道", "貓貍山公園"]}, "泰安": {"food": ["泰安舊站附近客家餐廳", "后里豬血湯", "后里馬場旁小吃"], "sight": ["泰安舊站鐵道文化園區", "泰安櫻花林（季節限定）", "后豐鐵馬道"]}, "日南": {"food": ["大甲芋頭酥", "日南在地麵攤", "大甲奶油酥餅"], "sight": ["日南車站（國定古蹟）", "日南海堤夕陽", "大甲鎮瀾宮（鄰近）"]}, "臺中港": {"food": ["梧棲漁港海鮮", "梧棲老街鹹蛋糕", "漁港現撈快炒"], "sight": ["梧棲漁港觀光魚市", "高美濕地（鄰近）", "三井OUTLET"]}, "龍井": {"food": ["東海雞爪凍", "東海藝術街小吃", "龍井在地肉圓"], "sight": ["麗水漁港", "龍井大排壁畫", "磺溪書院"]}, "栗林": {"food": ["豐原廟東夜市小吃", "豐原太平洋鹹酥雞", "排骨麵"], "sight": ["栗林車站新站體", "葫蘆墩公園", "豐原慈濟宮"]}, "頭家厝": {"food": ["潭子臭豆腐", "潭子在地麵攤", "豐原廟東小吃"], "sight": ["潭雅神綠園道自行車道", "摘星山莊古厝", "潭子運動公園"]}, "松竹": {"food": ["北屯大坑芋圓", "松竹路越南美食", "舊社公園旁小吃"], "sight": ["大坑步道群", "北屯兒童公園", "松竹捷運站（台鐵捷運共構）"]}, "太原": {"food": ["太原夜市小吃", "旱溪臭豆腐", "大坑竹筍大餐"], "sight": ["旱溪夜市（鄰近）", "太原綠園道", "大坑步道"]}, "精武": {"food": ["台中肉圓（精武路）", "台中第二市場老賴紅茶", "麻葉茶館"], "sight": ["台中公園", "一中商圈", "台中放送局"]}, "五權": {"food": ["台中第五市場蚵仔粥", "樂群街蒸餃", "美村路小吃"], "sight": ["國立台灣美術館", "草悟道", "審計新村文創園區"]}, "大慶": {"food": ["大慶夜市小吃", "忠孝路夜市", "南區米糕"], "sight": ["中興大學校園", "健康公園", "台中文化創意產業園區"]}, "烏日": {"food": ["烏日啤酒廠香腸", "知高圳步道旁在地小吃", "烏日市場肉羹"], "sight": ["台灣啤酒觀光工廠", "知高圳步道", "烏日聚奎居（歷史建築）"]}, "花壇": {"food": ["花壇肉羹", "花壇在地爌肉飯", "茉莉花茶"], "sight": ["花壇八卦山大佛（鄰近）", "花壇虎山巖", "茉莉花壇夢想館"]}, "大村": {"food": ["大村葡萄（季節限定）", "大村當歸鴨", "進昌咖啡烘焙館"], "sight": ["大村葡萄隧道", "進昌咖啡烘焙館（巴洛克建築）", "平和社區賞花"]}, "永靖": {"food": ["永靖市場米糕", "員林蜜餞", "永靖在地炸粿"], "sight": ["成美文化園", "余三館古厝", "永靖公學校宿舍"]}, "源泉": {"food": ["二水在地爌肉飯", "龍眼乾", "田中在地小吃"], "sight": ["源泉車站（小站風情）", "八堡圳取水口", "二水自行車道"]}, "濁水": {"food": ["集集山蕉蛋捲", "濁水在地小吃", "集集火車站便當"], "sight": ["濁水車站", "集集綠色隧道", "武昌宮地震紀念館"]}, "龍泉": {"food": ["集集山蕉甜點", "集集老街小吃", "在地竹筍料理"], "sight": ["龍泉車站旁綠色隧道", "集集攔河堰", "明新書院"]}, "集集": {"food": ["集集火車站前香蕉蛋捲", "集集老街臭豆腐", "山蕉冰淇淋"], "sight": ["集集車站（木造站房）", "集集綠色隧道", "特有生物中心"]}, "水里": {"food": ["水里肉圓", "水里二坪枝仔冰", "水里蛇窯旁餐廳"], "sight": ["水里蛇窯", "二坪枝仔冰", "水里溪步道"]}, "車埕": {"food": ["車埕老街木桶便當", "梅子酒", "車埕在地野菜料理"], "sight": ["車埕木業展示館", "車埕老街", "明潭水庫壩頂"]}, "石榴": {"food": ["斗六西市場肉圓", "斗六炊仔飯", "石榴在地麵攤"], "sight": ["石榴車站（百年老站）", "斗六人文公園", "雲中街生活聚落"]}, "石龜": {"food": ["斗南米糕", "斗南炸粿", "在地鵝肉"], "sight": ["石龜溪生態", "他里霧文化園區（斗南）", "石龜車站風光"]}, "水上": {"food": ["嘉義雞肉飯", "嘉義涼麵涼圓", "水上在地豆花"], "sight": ["北回歸線太陽館", "白人牙膏觀光工廠", "南靖糖廠"]}, "南靖": {"food": ["南靖糖廠冰品", "嘉義火雞肉飯", "南靖車站旁小吃"], "sight": ["南靖糖廠", "南靖車站日式站房", "嘉義蒜頭糖廠（鄰近）"]}, "嘉北": {"food": ["嘉義文化路夜市", "嘉義噴水雞肉飯", "御香屋葡萄柚綠茶"], "sight": ["嘉義文化路商圈", "森林之歌裝置藝術", "嘉義公園"]}, "後壁": {"food": ["後壁古早味割稻飯", "後壁冰糖醬鴨", "無米樂社區農家餐"], "sight": ["無米樂社區（菁寮老街）", "後壁土溝農村美術館", "墨林文物館"]}, "柳營": {"food": ["柳營牛奶鍋", "柳營鮮奶酪", "在地牛肉湯"], "sight": ["柳營酪農區", "德元埤荷蘭村", "劉啟祥美術紀念館"]}, "林鳳營": {"food": ["林鳳營鮮乳製品", "麻豆碗粿", "在地古早味冰品"], "sight": ["林鳳營車站（日式老站房）", "六甲落羽松森林", "烏山頭水庫（鄰近）"]}, "隆田": {"food": ["隆田酒廠在地小吃", "善化牛肉湯", "麻豆碗粿"], "sight": ["隆田CHA CHA文化資產教育園區", "烏山頭水庫", "官田水雉生態園區"]}, "拔林": {"food": ["善化在地小吃", "善化牛肉湯", "在地碗粿"], "sight": ["拔林車站（迷你秘境站）", "善化糖廠", "大內南瀛天文館"]}, "南科": {"food": ["南科園區商圈美食", "善化牛肉湯", "新市在地小吃"], "sight": ["南科考古館", "南科迎曦湖", "樹谷生活科學館"]}, "新市": {"food": ["新市肉粿", "在地虱目魚粥", "新市豆菜麵"], "sight": ["新市社內遺址", "大新營區自行車道", "南科園區公園"]}, "大橋": {"food": ["永康大橋鱔魚意麵", "永康復國市場小吃", "台南鹽酥雞"], "sight": ["永康公園", "永康探索教育公園", "台南大橋都會風光"]}, "仁德": {"food": ["仁德阿裕牛肉湯", "仁德在地蝦捲", "仁德萬國通路手作觀光工廠餐廳"], "sight": ["十鼓仁糖文創園區", "奇美博物館", "台南都會公園"]}, "中洲": {"food": ["保安車站周邊古早味", "仁德在地小吃", "車路墘肉粿"], "sight": ["保安車站（永保安康）", "虎山林場步道", "歸仁老街"]}, "長榮大學": {"food": ["歸仁在地肉燥飯", "大學城周邊小吃", "歸仁豆花"], "sight": ["長榮大學校園", "歸仁公園", "歸仁仁壽宮"]}, "沙崙": {"food": ["高鐵站美食街", "歸仁在地美食", "台南鮮魚湯"], "sight": ["高鐵台南站", "台南沙崙綠能科學城", "歸仁十三甲武當山"]}, "大湖": {"food": ["路竹鵝肉", "岡山羊肉爐", "在地小吃攤"], "sight": ["大湖車站田園風光", "路竹農場", "岡山之眼（鄰近）"]}, "路竹": {"food": ["路竹夜市小吃", "路竹鵝肉", "在地虱目魚料理"], "sight": ["路竹體育園區", "蔡文國小日式校舍", "高雄科學園區"]}, "左營(舊城)": {"food": ["左營眷村美食", "劉家酸菜白肉鍋", "左營大路汾陽餛飩"], "sight": ["鳳山縣舊城", "左營蓮池潭", "見城館"]}, "內惟": {"food": ["內惟市場小吃", "美術館周邊咖啡廳", "內惟在地碗粿"], "sight": ["內惟藝術中心", "高雄美術館", "柴山自然公園"]}, "美術館": {"food": ["美術館周邊文青咖啡", "明誠路餐廳街", "馬家麵線"], "sight": ["高雄市立美術館", "美術館雕塑公園", "柴山步道入口"]}, "鼓山": {"food": ["哈瑪星古早味", "鼓山渡船頭海之冰", "西子灣海產"], "sight": ["哈瑪星鐵道文化園區", "武德殿", "西子灣隧道"]}, "三塊厝": {"food": ["三塊厝老街小吃", "鹽埕區古早味", "大溝頂市場"], "sight": ["三塊厝車站（百年站房）", "愛河之心", "高雄願景館"]}, "民族": {"food": ["自強夜市小吃", "民族路烤肉", "高雄肉燥飯"], "sight": ["高雄科工館（鄰近）", "三民公園", "建功路眷村文化"]}, "科工館": {"food": ["九如路美食", "科工館旁便當街", "三民市場小吃"], "sight": ["國立科學工藝博物館", "三民家商旁公園", "本和里滯洪公園"]}, "正義": {"food": ["鳳山中華夜市", "正義路小吃", "鳳山肉圓"], "sight": ["衛武營國家藝術文化中心", "鳳山城隍廟", "大東文化藝術中心"]}, "六塊厝": {"food": ["屏東夜市小吃", "萬丹紅豆餅", "在地粿仔條"], "sight": ["六塊厝車站田園風光", "屏東公園", "萬丹鄉間風情"]}, "歸來": {"food": ["屏東肉圓", "在地鮮魚湯", "歸來社區小吃"], "sight": ["歸來車站（小站風情）", "屏東菸葉廠", "麟洛車站鐵馬道"]}, "麟洛": {"food": ["麟洛客家粄條", "客家鹹豬肉", "屏東夜市"], "sight": ["麟洛運動公園", "六堆客家文化園區（鄰近）", "屏東自行車國道"]}, "西勢": {"food": ["六堆客家菜", "西勢粄條", "客家封肉"], "sight": ["六堆客家文化園區", "西勢車站（客庄風情）", "竹田驛園"]}, "竹田": {"food": ["竹田驛園旁客家菜", "客家擂茶", "竹田在地碗粿"], "sight": ["竹田驛園（日式站房）", "竹田老街", "達達港水利公園"]}, "崁頂": {"food": ["崁頂在地肉燥飯", "東港黑鮪魚（鄰近）", "萬丹紅豆湯"], "sight": ["崁頂田園風光", "力社北院媽祖廟", "東港大鵬灣（鄰近）"]}, "鎮安": {"food": ["林邊黑珍珠蓮霧", "東港海鮮", "在地虱目魚料理"], "sight": ["鎮安車站（小站秘境）", "林邊溪堤防步道", "光采濕地"]}, "佳冬": {"food": ["佳冬蓮霧", "海鮮快炒", "客家粄條"], "sight": ["佳冬蕭家古厝", "佳冬客家聚落", "楊氏宗祠"]}, "東海": {"food": ["枋寮海產", "東海在地小吃", "芒果冰（季節限定）"], "sight": ["東海車站海景", "枋寮藝術村（鄰近）", "東海漁港"]}, "內獅": {"food": ["枋山芒果（季節限定）", "枋寮海鮮", "原住民風味餐"], "sight": ["內獅車站（最少人的車站之一）", "獅子鄉原鄉風情", "雙流國家森林遊樂區"]}, "枋山": {"food": ["枋山芒果", "愛文芒果冰", "在地海鮮"], "sight": ["枋山車站海景", "枋山超級56K觀海涼亭", "枋山沿海公路風光"]}, "瀧溪": {"food": ["原住民野菜料理", "小米酒", "山產風味餐"], "sight": ["瀧溪車站秘境", "大武山自然保留區（遠眺）", "太平洋海岸線"]}, "山里": {"food": ["台東米苔目", "山里在地部落美食", "小米粽"], "sight": ["山里車站（到不了的車站）", "山里教堂", "初鹿牧場（鄰近）"]}, "瑞源": {"food": ["鹿野紅烏龍茶", "在地釋迦冰品", "原住民風味餐"], "sight": ["瑞源小學日式校長宿舍", "鹿野鄉田園風光", "二層坪水橋"]}, "瑞和": {"food": ["關山便當", "關山米做成的米乖乖", "在地茶飲"], "sight": ["瑞和車站（稻田小站）", "關山親水公園（鄰近）", "197縣道田園單車道"]}, "海端": {"food": ["布農族風味餐", "小米飯", "山豬肉串"], "sight": ["海端鄉布農族文化館", "霧鹿峽谷（上游）", "南橫公路入口"]}, "東竹": {"food": ["富里農會便當", "花東縱谷米食", "在地野菜料理"], "sight": ["東竹車站田園秘境", "富里稻田景觀", "羅山瀑布（鄰近）"]}, "東里": {"food": ["玉里麵", "玉里臭豆腐（鄰近）", "在地米食料理"], "sight": ["東里車站（稻田中的車站）", "玉富自行車道", "六十石山（季節金針花）"]}, "三民": {"food": ["玉里麵", "玉里橋頭臭豆腐", "瑞穗鮮乳製品"], "sight": ["三民車站鐵道風光", "赤科山（季節金針花）", "玉里神社遺址"]}, "富源": {"food": ["瑞穗鮮奶饅頭", "富源在地小吃", "蝴蝶谷附近餐廳"], "sight": ["富源國家森林遊樂區（蝴蝶谷）", "拉索埃湧泉", "富源車站"]}, "大富": {"food": ["光復糖廠冰淇淋", "阿美族野菜", "在地豐年餐"], "sight": ["大富平地森林園區", "大農大富花海（季節限定）", "光復糖廠"]}, "萬榮": {"food": ["光復糖廠冰品", "太巴塱部落風味餐", "紅糯米飯"], "sight": ["萬榮林田山林業文化園區", "馬太鞍溼地", "太巴塱部落"]}, "南平": {"food": ["鳳林剝皮辣椒", "鳳林韭菜臭豆腐", "客家菜包"], "sight": ["南平車站田園風光", "鳳林客家文物館", "箭瑛大橋"]}, "豐田": {"food": ["豐田在地日式料理", "壽豐豆花", "在地有機蔬食"], "sight": ["豐田移民村（日式遺跡）", "豐田玉展示館", "碧蓮寺"]}, "平和": {"food": ["壽豐在地小吃", "志學周邊學生美食", "壽豐豆花"], "sight": ["平和車站秘境", "鯉魚潭（鄰近）", "東華大學校園"]}, "景美": {"food": ["新城老街小吃", "佳興冰果室檸檬汁", "原住民風味餐"], "sight": ["景美車站鐵道風光", "新城照相館", "三棧溪戲水（季節限定）"]}, "崇德": {"food": ["崇德在地小吃", "太魯閣附近原住民料理", "花蓮扁食"], "sight": ["崇德海灘（最美海灘之一）", "清水斷崖眺望點", "太魯閣國家公園入口"]}, "和仁": {"food": ["太魯閣周邊餐廳", "原住民獵人便當", "在地山產"], "sight": ["和仁海灘", "清水斷崖北端", "蘇花公路絕美海景"]}, "漢本": {"food": ["漢本車站旁雜貨店", "南澳在地原住民小吃", "蘇花沿線便當"], "sight": ["漢本車站（絕壁小站）", "漢本海灘", "蘇花公路最美路段"]}, "武塔": {"food": ["南澳建華冰店", "泰雅族風味餐", "南澳在地小吃"], "sight": ["武塔部落泰雅文化", "南澳古道入口", "武塔車站鐵道風光"]}, "東澳": {"food": ["東澳粉鳥林漁港海鮮", "東岳湧泉旁小吃", "在地飛魚料理"], "sight": ["東澳灣", "粉鳥林漁港秘境", "東岳湧泉（夏季戲水）"]}, "永樂": {"food": ["蘇澳冷泉附近小吃", "蘇澳海鮮", "白米木屐村旁餐廳"], "sight": ["永樂車站海灣風光", "白米木屐村", "蘇澳冷泉（鄰近）"]}, "新馬": {"food": ["蘇澳海鮮", "蘇澳冷泉汽水", "南方澳魚丸"], "sight": ["新馬車站", "冬山河下游", "蘇澳冷泉公園"]}, "中里": {"food": ["羅東夜市小吃", "羅東肉羹番", "包心粉圓"], "sight": ["中里車站（迷你小站）", "羅東運動公園", "冬山河自行車道"]}, "二結": {"food": ["二結在地小吃", "宜蘭蔥油餅", "鴨賞"], "sight": ["二結穀倉稻農文化館", "宜蘭傳統藝術中心（鄰近）", "冬山河"]}, "四城": {"food": ["礁溪蔥油餅", "礁溪溫泉拉麵", "甕仔雞"], "sight": ["四城車站田園風光", "礁溪溫泉（鄰近）", "吳沙紀念館"]}, "頂埔": {"food": ["礁溪溫泉蔬菜", "礁溪蔥油餅", "柯氏蔥油餅"], "sight": ["頂埔車站鄉村風光", "礁溪五峰旗瀑布（鄰近）", "林美石磐步道"]}, "外澳": {"food": ["頭城老街小吃", "阿宗芋冰城", "外澳衝浪區餐廳"], "sight": ["外澳海灘（衝浪勝地）", "外澳服務區觀景", "龜山島眺望點"]}, "龜山": {"food": ["龜山島海鮮", "在地魚丸", "頭城老街小吃"], "sight": ["龜山車站（最靠近龜山島）", "龜山島眺望", "北關海潮公園"]}, "大溪": {"food": ["大溪漁港海鮮", "大溪蜜餞", "現撈仔漁獲"], "sight": ["大溪漁港", "大溪車站海景", "蜜月灣（衝浪）"]}, "大里": {"food": ["大里天公廟旁小吃", "石花凍", "頭城海鮮"], "sight": ["大里天公廟", "草嶺古道入口", "大里海岸步道"]}, "石城": {"food": ["石城在地小吃攤", "石花凍", "草嶺古道出口旁小店"], "sight": ["石城車站（宜蘭最北站）", "草嶺古道北端", "石城海岸礁石步道"]}, "四腳亭": {"food": ["四腳亭在地小吃", "瑞芳美食街", "礦工便當"], "sight": ["四腳亭砲台古蹟", "瑞芳老街（鄰近）", "四腳亭步道"]}, "猴硐": {"food": ["猴硐貓村咖啡廳", "礦工便當", "古早味麵食"], "sight": ["猴硐貓村", "猴硐煤礦博物園區", "三貂嶺瀑布步道入口"]}, "三貂嶺": {"food": ["三貂嶺咖啡（藝文空間）", "猴硐美食（鄰近）", "在地古早味"], "sight": ["三貂嶺瀑布步道", "三貂嶺生態友善隧道", "碩仁國小遺址"]}, "牡丹": {"food": ["牡丹老街小吃", "牡丹車站旁麵攤", "在地山產料理"], "sight": ["牡丹老街", "牡丹車站日式站房", "貂山古道入口"]}, "大華": {"food": ["十分老街小吃", "花生捲冰淇淋", "礦工便當"], "sight": ["大華壺穴", "大華車站（秘境小站）", "十分瀑布步道"]}, "十分": {"food": ["十分老街花生捲冰淇淋", "十分雞翅包飯", "礦工便當"], "sight": ["十分瀑布", "十分老街放天燈", "十分車站鐵道風光"]}, "望古": {"food": ["平溪老街小吃", "山泉豆花", "在地野菜"], "sight": ["望古瀑布（秘境）", "望古車站（最冷門站）", "望古賞螢步道"]}, "嶺腳": {"food": ["嶺腳古早味麵店", "平溪老街小吃", "山產料理"], "sight": ["嶺腳瀑布", "嶺腳車站", "嶺腳寮山步道"]}, "平溪": {"food": ["平溪老街香腸", "芋圓", "古早味冰品"], "sight": ["平溪老街放天燈", "平溪防空洞", "孝子山步道"]}, "菁桐": {"food": ["菁桐老街雞捲", "菁桐礦工食堂", "紅寶礦場咖啡"], "sight": ["菁桐車站（日式站房）", "菁桐老街許願竹筒", "菁桐礦業生活館"]}, "花蓮港": {"food": ["花蓮扁食", "液香扁食", "花蓮公正包子"], "sight": ["花蓮港觀景台", "太平洋公園", "花蓮市區自強夜市"]}};
+
+// ============================================================
+// Web Audio API — Sound Effects
+// ============================================================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playTick(pitch) {
+  ensureAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 600 + pitch * 400;
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.06);
+}
+
+function playCountdownBeep(isGo) {
+  ensureAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = isGo ? 'square' : 'sine';
+  osc.frequency.value = isGo ? 880 : 440;
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (isGo ? 0.3 : 0.15));
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + (isGo ? 0.3 : 0.15));
+}
+
+function playFanfare() {
+  ensureAudio();
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    const t = audioCtx.currentTime + i * 0.12;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.12, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.5);
+  });
+}
+
+function playDrumRoll() {
+  ensureAudio();
+  for (let i = 0; i < 20; i++) {
+    const t = audioCtx.currentTime + i * 0.04;
+    const noise = audioCtx.createBufferSource();
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.03, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let j = 0; j < data.length; j++) data[j] = (Math.random() * 2 - 1) * 0.3;
+    noise.buffer = buffer;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.06 + i * 0.004, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    noise.connect(gain);
+    gain.connect(audioCtx.destination);
+    noise.start(t);
+  }
+}
+
+// ============================================================
+// Floating Particles (ambient)
+// ============================================================
+(function initParticles() {
+  const container = document.getElementById('particlesContainer');
+  const colors = ['#38bdf8','#818cf8','#6366f1','#f472b6','#34d399'];
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 2 + Math.random() * 4;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    container.appendChild(p);
+  }
+})();
+
+// ============================================================
+// Map
+// ============================================================
+const map = L.map('map', {
+  center: [23.7, 121.0],
+  zoom: 8,
+  zoomControl: false,
+  attributionControl: false,
+});
+
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+L.control.attribution({ position: 'bottomleft' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19,
+}).addTo(map);
+
+const markerLayers = {};
+
+expressStations.forEach(s => {
+  const m = L.circleMarker([s.lat, s.lng], {
+    radius: 3, fillColor: '#475569', color: '#334155',
+    weight: 1, fillOpacity: 0.5,
+  }).addTo(map);
+  m.bindTooltip(s.name, { className: 'dark-tooltip', direction: 'top', offset: [0,-5] });
+  markerLayers[s.name] = m;
+});
+
+candidates.forEach(s => {
+  const m = L.circleMarker([s.lat, s.lng], {
+    radius: 5, fillColor: '#818cf8', color: '#6366f1',
+    weight: 1.5, fillOpacity: 0.7,
+  }).addTo(map);
+  m.bindTooltip(s.name, { className: 'dark-tooltip', direction: 'top', offset: [0,-5] });
+  markerLayers[s.name] = m;
+});
+
+let resultMarkers = [];
+
+function clearResultMarkers() {
+  resultMarkers.forEach(m => map.removeLayer(m));
+  resultMarkers = [];
+}
+
+function addResultMarker(station) {
+  const pulse = L.divIcon({
+    className: '',
+    html: '<div class="marker-pulse"></div>',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+  const pm = L.marker([station.lat, station.lng], { icon: pulse }).addTo(map);
+  resultMarkers.push(pm);
+
+  const cm = L.circleMarker([station.lat, station.lng], {
+    radius: 10, fillColor: '#38bdf8', color: '#fff',
+    weight: 2, fillOpacity: 0.9,
+  }).addTo(map);
+  cm.bindPopup(
+    '<div class="popup-name">' + station.name + '</div>' +
+    '<div class="popup-meta">' + station.city + ' · ' + station.line + '</div>',
+    { closeButton: false, autoClose: false }
+  ).openPopup();
+  resultMarkers.push(cm);
+}
+
+// ============================================================
+// Map Flicker Effect (during spin)
+// ============================================================
+let flickerInterval = null;
+let flickerHighlighted = [];
+
+function startMapFlicker() {
+  flickerInterval = setInterval(() => {
+    // reset previous
+    flickerHighlighted.forEach(name => {
+      const m = markerLayers[name];
+      if (m) m.setStyle({ fillColor: '#818cf8', color: '#6366f1', radius: 5, fillOpacity: 0.7 });
+    });
+    flickerHighlighted = [];
+    // highlight 3 random candidates
+    for (let i = 0; i < 3; i++) {
+      const s = candidates[Math.floor(Math.random() * candidates.length)];
+      const m = markerLayers[s.name];
+      if (m) {
+        m.setStyle({ fillColor: '#fbbf24', color: '#f59e0b', radius: 9, fillOpacity: 1 });
+        flickerHighlighted.push(s.name);
+      }
+    }
+  }, 150);
+}
+
+function stopMapFlicker() {
+  if (flickerInterval) clearInterval(flickerInterval);
+  flickerInterval = null;
+  flickerHighlighted.forEach(name => {
+    const m = markerLayers[name];
+    if (m) m.setStyle({ fillColor: '#818cf8', color: '#6366f1', radius: 5, fillOpacity: 0.7 });
+  });
+  flickerHighlighted = [];
+}
+
+// ============================================================
+// Suspense Text
+// ============================================================
+const suspenseMessages = [
+  '命運之輪啟動中...',
+  '宇宙正在為你挑選...',
+  '車站們在竊竊私語...',
+  '鐵軌的盡頭是驚喜...',
+  '月台正在向你招手...',
+  '列車即將抵達命運站...',
+  '緣分正在加速中...',
+  '秘境小站已經迫不及待了...',
+];
+let suspenseTimer = null;
+const suspenseEl = document.getElementById('suspenseText');
+
+function startSuspenseText() {
+  let idx = 0;
+  suspenseEl.classList.add('visible');
+  suspenseEl.textContent = suspenseMessages[0];
+  suspenseTimer = setInterval(() => {
+    idx = (idx + 1) % suspenseMessages.length;
+    suspenseEl.style.opacity = '0';
+    setTimeout(() => {
+      suspenseEl.textContent = suspenseMessages[idx];
+      suspenseEl.style.opacity = '1';
+    }, 300);
+  }, 1200);
+}
+
+function stopSuspenseText() {
+  if (suspenseTimer) clearInterval(suspenseTimer);
+  suspenseTimer = null;
+  suspenseEl.classList.remove('visible');
+}
+
+// ============================================================
+// Countdown
+// ============================================================
+function runCountdown() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('countdownOverlay');
+    overlay.classList.add('active');
+    const steps = ['3', '2', '1', 'GO!'];
+    let i = 0;
+
+    function showStep() {
+      if (i >= steps.length) {
+        overlay.classList.remove('active');
+        overlay.innerHTML = '';
+        resolve();
+        return;
+      }
+      const isGo = steps[i] === 'GO!';
+      playCountdownBeep(isGo);
+      overlay.innerHTML = '<div class="countdown-num ' + (isGo ? 'go' : '') + '">' + steps[i] + '</div>';
+      i++;
+      setTimeout(showStep, isGo ? 500 : 700);
+    }
+
+    showStep();
+  });
+}
+
+// ============================================================
+// Enhanced Confetti
+// ============================================================
+function spawnConfetti() {
+  const wrap = slotWindow;
+  const colors = ['#38bdf8','#818cf8','#f472b6','#34d399','#fbbf24','#fb923c'];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.top = (30 + Math.random() * 20) + '%';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    c.style.animationDuration = (1.5 + Math.random() * 1) + 's';
+    c.style.width = (6 + Math.random() * 8) + 'px';
+    c.style.height = (6 + Math.random() * 8) + 'px';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    wrap.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+function spawnFullScreenConfetti() {
+  const colors = ['#38bdf8','#818cf8','#f472b6','#34d399','#fbbf24','#fb923c','#e879f9','#22d3ee'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-big';
+    const size = 8 + Math.random() * 12;
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.top = '-20px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    c.style.animationDelay = (Math.random() * 0.8) + 's';
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 5000);
+  }
+}
+
+// screen flash
+function triggerScreenFlash() {
+  const flash = document.getElementById('screenFlash');
+  flash.classList.remove('flash');
+  void flash.offsetWidth; // reflow
+  flash.classList.add('flash');
+}
+
+// ============================================================
+// Slot Machine
+// ============================================================
+const slotWindow = document.getElementById('slotWindow');
+const slotTrack  = document.getElementById('slotTrack');
+const resultCard = document.getElementById('resultCard');
+const btnDraw    = document.getElementById('btnDraw');
+const ITEM_H = 50;
+
+let isSpinning = false;
+let history = [];
+
+function buildTrack() {
+  slotTrack.innerHTML = '';
+  const pool = [];
+  for (let i = 0; i < 80; i++) {
+    pool.push(candidates[Math.floor(Math.random() * candidates.length)]);
+  }
+  pool.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'slot-item';
+    div.textContent = s.name + '（' + s.city + '）';
+    div.dataset.index = i;
+    slotTrack.appendChild(div);
+  });
+  slotTrack.style.transform = 'translateY(75px)';
+  return pool;
+}
+
+// main draw — now with countdown + suspense + flicker + sound
+async function startDraw() {
+  if (isSpinning) return;
+  isSpinning = true;
+  btnDraw.disabled = true;
+  ensureAudio();
+
+  const count = parseInt(document.getElementById('drawCount').value);
+  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  const winners = shuffled.slice(0, count);
+
+  clearResultMarkers();
+  map.flyTo([23.7, 121.0], 8, { duration: 1.0 });
+  resultCard.classList.remove('has-result', 'reveal-anim');
+  resultCard.innerHTML = '<span class="placeholder">準備中...</span>';
+  document.getElementById('infoPanel').classList.remove('visible');
+
+  // ---- COUNTDOWN ----
+  await runCountdown();
+
+  // ---- SEQUENTIAL ANIMATION ----
+  let seq = 0;
+  function animateOne() {
+    const winner = winners[seq];
+    const pool = buildTrack();
+
+    const landIndex = 60 + Math.floor(Math.random() * 5);
+    const landItem = slotTrack.children[landIndex];
+    landItem.textContent = winner.name + '（' + winner.city + '）';
+
+    slotWindow.classList.add('spinning');
+    slotWindow.classList.remove('landed');
+
+    // start effects
+    startSuspenseText();
+    startMapFlicker();
+    playDrumRoll();
+
+    const targetY = 75 - landIndex * ITEM_H;
+    const duration = 3500 + Math.random() * 500;
+    const startTime = performance.now();
+    const startY = 75;
+    let lastTickItem = -1;
+
+    function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutQuint(progress);
+      const currentY = startY + (targetY - startY) * eased;
+      slotTrack.style.transform = 'translateY(' + currentY + 'px)';
+
+      // tick sound — play a click for each item passed
+      const currentItem = Math.floor(Math.abs(currentY - 75) / ITEM_H);
+      if (currentItem !== lastTickItem) {
+        lastTickItem = currentItem;
+        if (progress < 0.85) playTick(progress);
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        // ===== LANDED! =====
+        slotWindow.classList.remove('spinning');
+        slotWindow.classList.add('landed');
+        landItem.classList.add('highlight');
+
+        // stop effects
+        stopSuspenseText();
+        stopMapFlicker();
+
+        // big reveal!
+        playFanfare();
+        triggerScreenFlash();
+        spawnConfetti();
+        spawnFullScreenConfetti();
+
+        // show on map
+        addResultMarker(winner);
+
+        // update result card with animation
+        showResult(winners.slice(0, seq + 1));
+        showStationInfo(winners.slice(0, seq + 1));
+        resultCard.classList.remove('reveal-anim');
+        void resultCard.offsetWidth;
+        resultCard.classList.add('reveal-anim');
+
+        // add to history
+        history.unshift(winner);
+        updateHistory();
+
+        seq++;
+        if (seq < winners.length) {
+          setTimeout(animateOne, 1800);
+        } else {
+          // all done — fly map
+          if (winners.length === 1) {
+            map.flyTo([winner.lat, winner.lng], 13, { duration: 1.5 });
+          } else {
+            const bounds = L.latLngBounds(winners.map(w => [w.lat, w.lng]));
+            map.flyToBounds(bounds.pad(0.3), { duration: 1.5 });
+          }
+          isSpinning = false;
+          btnDraw.disabled = false;
+        }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  animateOne();
+}
+
+function showResult(winners) {
+  resultCard.classList.add('has-result');
+  if (winners.length === 1) {
+    const w = winners[0];
+    resultCard.innerHTML =
+      '<div class="station-name">' + w.name + '</div>' +
+      '<div class="station-meta">' + w.city + ' · ' + w.line + '</div>';
+  } else {
+    resultCard.innerHTML = winners.map((w, i) =>
+      '<div style="margin-bottom:4px">' +
+      '<span class="station-name" style="font-size:1.3rem">[' + (i+1) + '] ' + w.name + '</span>' +
+      ' <span class="station-meta" style="font-size:.78rem">' + w.city + '</span></div>'
+    ).join('');
+  }
+}
+
+// keyword -> emoji mapping
+const foodEmojiRules = [
+  [/麵|粄條|米粉|麵線/, '🍜'],
+  [/飯|便當|米糕|粥|燴飯|油飯/, '🍚'],
+  [/冰|冰品|冰淇淋|冰棒|枝仔冰|雪花/, '🍧'],
+  [/海鮮|魚|蝦|蟹|蚵|小卷|鮪|虱目|鰻|花枝/, '🦐'],
+  [/雞|鵝|鴨|雞肉|鵝肉/, '🍗'],
+  [/茶|咖啡|擂茶|紅茶|綠茶|檸檬/, '☕'],
+  [/肉|排骨|牛肉|豬|羊肉|香腸|臭豆腐|鹹豬/, '🥩'],
+  [/酒|啤酒/, '🍺'],
+  [/豆花|甜點|糕|粿|蛋糕|芋圓|圓|餅|酥|蜜餞|蓮霧|芒果|葡萄|釋迦|梅/, '🍰'],
+  [/湯|羹|鍋/, '🍲'],
+  [/包|捲|粽|餃/, '🥟'],
+];
+const sightEmojiRules = [
+  [/步道|山|登山|古道|嶺/, '⛰️'],
+  [/海|漁港|海灘|海岸|灣|衝浪|潮境/, '🏖️'],
+  [/老街|車站|古蹟|古厝|日式|眷村|隧道/, '🏮'],
+  [/公園|園區|森林|濕地|牧場|農/, '🌿'],
+  [/瀑布|溪|湖|泉|水庫|圳|河/, '💧'],
+  [/博物館|美術館|文化|藝術|紀念|展示/, '🎨'],
+  [/夜市|市場|商圈/, '🏮'],
+  [/寺|廟|宮|教堂/, '⛩️'],
+  [/自行車|鐵馬|單車/, '🚲'],
+  [/觀景|眺望|夕陽|日出/, '🌅'],
+];
+const defaultFoodEmoji = '🍴';
+const defaultSightEmoji = '📍';
+
+function getEmoji(text, rules, fallback) {
+  for (const [re, emoji] of rules) {
+    if (re.test(text)) return emoji;
+  }
+  return fallback;
+}
+
+function renderCards(items, type, rules, fallback) {
+  return items.map((text, i) => {
+    const emoji = getEmoji(text, rules, fallback);
+    const delay = (i * 0.08).toFixed(2);
+    return '<div class="info-card ' + type + '-card" style="animation-delay:' + delay + 's">' +
+      '<span class="card-emoji">' + emoji + '</span>' +
+      '<span class="card-text">' + text + '</span></div>';
+  }).join('');
+}
+
+function showStationInfo(winners) {
+  const panel = document.getElementById('infoPanel');
+  const foodEl = document.getElementById('infoFood');
+  const sightEl = document.getElementById('infoSight');
+
+  let allFood = [];
+  let allSight = [];
+  winners.forEach(w => {
+    const info = stationInfo[w.name];
+    if (info) {
+      const prefix = winners.length > 1 ? ('[' + w.name + '] ') : '';
+      if (info.food) info.food.forEach(f => allFood.push(prefix + f));
+      if (info.sight) info.sight.forEach(s => allSight.push(prefix + s));
+    }
+  });
+
+  if (allFood.length === 0 && allSight.length === 0) {
+    panel.classList.remove('visible');
+    return;
+  }
+
+  foodEl.className = 'info-section';
+  foodEl.innerHTML =
+    '<div class="info-section-title food-title">&#127836; 特色美食</div>' +
+    '<div class="info-cards">' + renderCards(allFood, 'food', foodEmojiRules, defaultFoodEmoji) + '</div>';
+
+  sightEl.className = 'info-section';
+  sightEl.innerHTML =
+    '<div class="info-section-title sight-title">&#128205; 觀光景點</div>' +
+    '<div class="info-cards">' + renderCards(allSight, 'sight', sightEmojiRules, defaultSightEmoji) + '</div>';
+
+  panel.classList.add('visible');
+}
+
+function updateHistory() {
+  const wrap = document.getElementById('historyWrap');
+  const list = document.getElementById('historyList');
+  wrap.style.display = 'block';
+  list.innerHTML = history.slice(0, 20).map(h =>
+    '<span class="history-tag">' + h.name + '</span>'
+  ).join('');
+}
+
+// init
+buildTrack();
+</script>
+</body>
+</html>
