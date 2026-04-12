@@ -1118,9 +1118,6 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
     </div>
 
     <div class="controls">
-      <div class="filter-group" id="filterRoute">
-        <span class="filter-group-label">路線</span>
-      </div>
       <div class="filter-group" id="filterRegion">
         <span class="filter-group-label">區域</span>
       </div>
@@ -1163,25 +1160,23 @@ const stationInfo = {info_json};
 // ============================================================
 const TOTAL_CANDIDATES = candidates.length;
 
-const ROUTE_MAP = {{
-  '縱貫線': ['縱貫線'],
-  '海岸線': ['海岸線'],
-  '山線': ['臺中線(山線)'],
-  '宜蘭線': ['宜蘭線'],
-  '北迴線': ['北迴線'],
-  '南迴線': ['南迴線'],
-  '臺東線': ['臺東線'],
-  '屏東線': ['屏東線'],
-  '支線': ['平溪線','內灣線','集集線','深澳線','沙崙線','六家線','花蓮臨港線'],
-}};
 const REGION_MAP = {{
   '北部': ['基隆市','新北市','臺北市','桃園市','新竹縣','新竹市'],
   '中部': ['苗栗縣','臺中市','彰化縣','南投縣','雲林縣'],
   '南部': ['嘉義縣','嘉義市','臺南市','高雄市','屏東縣'],
   '東部': ['宜蘭縣','花蓮縣','臺東縣'],
 }};
+const REGION_COLORS = {{
+  '北部': {{ fill: '#38bdf8', border: '#0ea5e9' }},
+  '中部': {{ fill: '#34d399', border: '#10b981' }},
+  '南部': {{ fill: '#fbbf24', border: '#f59e0b' }},
+  '東部': {{ fill: '#f472b6', border: '#ec4899' }},
+}};
+const CITY_TO_REGION = {{}};
+Object.entries(REGION_MAP).forEach(([region, cities]) => {{
+  cities.forEach(c => {{ CITY_TO_REGION[c] = region; }});
+}});
 
-const activeRoutes = new Set(Object.keys(ROUTE_MAP));
 const activeRegions = new Set(Object.keys(REGION_MAP));
 
 // localStorage persistence
@@ -1196,12 +1191,10 @@ function saveHistory() {{
 }}
 
 function getFilteredCandidates() {{
-  const allowedLines = new Set();
-  activeRoutes.forEach(r => ROUTE_MAP[r].forEach(l => allowedLines.add(l)));
   const allowedCities = new Set();
   activeRegions.forEach(r => REGION_MAP[r].forEach(c => allowedCities.add(c)));
   return candidates.filter(s =>
-    allowedLines.has(s.line) && allowedCities.has(s.city) && !drawnStations.has(s.name)
+    allowedCities.has(s.city) && !drawnStations.has(s.name)
   );
 }}
 
@@ -1358,11 +1351,14 @@ expressStations.forEach(s => {{
 }});
 
 candidates.forEach(s => {{
+  const region = CITY_TO_REGION[s.city] || '北部';
+  const rc = REGION_COLORS[region];
   const m = L.circleMarker([s.lat, s.lng], {{
-    radius: 5, fillColor: '#818cf8', color: '#6366f1',
+    radius: 5, fillColor: rc.fill, color: rc.border,
     weight: 1.5, fillOpacity: 0.7,
   }}).addTo(map);
   m.bindTooltip(s.name, {{ className: 'dark-tooltip', direction: 'top', offset: [0,-5] }});
+  m._region = region;
   markerLayers[s.name] = m;
 }});
 
@@ -1808,36 +1804,41 @@ function showStationInfo(winners) {{
 // ============================================================
 // Filter Tags — render & toggle
 // ============================================================
-function renderFilterTags() {{
-  const routeWrap = document.getElementById('filterRoute');
-  const regionWrap = document.getElementById('filterRegion');
+function updateMapRegions() {{
+  candidates.forEach(s => {{
+    const m = markerLayers[s.name];
+    if (!m) return;
+    const region = CITY_TO_REGION[s.city];
+    const active = activeRegions.has(region);
+    const rc = REGION_COLORS[region] || REGION_COLORS['北部'];
+    m.setStyle({{
+      fillColor: active ? rc.fill : '#334155',
+      color: active ? rc.border : '#1e293b',
+      fillOpacity: active ? 0.7 : 0.15,
+    }});
+    m.setRadius(active ? 5 : 3);
+  }});
+}}
 
-  // keep the label, clear tags
-  routeWrap.innerHTML = '<span class="filter-group-label">路線</span>';
+function renderFilterTags() {{
+  const regionWrap = document.getElementById('filterRegion');
   regionWrap.innerHTML = '<span class="filter-group-label">區域</span>';
 
-  Object.keys(ROUTE_MAP).forEach(name => {{
-    const tag = document.createElement('span');
-    tag.className = 'filter-tag' + (activeRoutes.has(name) ? ' active' : '');
-    tag.textContent = name;
-    tag.onclick = () => {{
-      if (activeRoutes.has(name)) activeRoutes.delete(name);
-      else activeRoutes.add(name);
-      tag.classList.toggle('active');
-      updateFilteredCount();
-    }};
-    routeWrap.appendChild(tag);
-  }});
-
   Object.keys(REGION_MAP).forEach(name => {{
+    const rc = REGION_COLORS[name];
     const tag = document.createElement('span');
     tag.className = 'filter-tag' + (activeRegions.has(name) ? ' active' : '');
     tag.textContent = name;
+    if (activeRegions.has(name)) {{
+      tag.style.background = 'linear-gradient(135deg,' + rc.fill + ',' + rc.border + ')';
+      tag.style.borderColor = rc.border;
+    }}
     tag.onclick = () => {{
       if (activeRegions.has(name)) activeRegions.delete(name);
       else activeRegions.add(name);
-      tag.classList.toggle('active');
+      renderFilterTags();
       updateFilteredCount();
+      updateMapRegions();
     }};
     regionWrap.appendChild(tag);
   }});
@@ -1893,6 +1894,7 @@ renderFilterTags();
 renderHistory();
 updateProgress();
 updateFilteredCount();
+updateMapRegions();
 buildTrack();
 </script>
 </body>
