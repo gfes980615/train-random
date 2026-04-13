@@ -767,64 +767,64 @@ def main():
 /* ---------- reset & base ---------- */
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
-  background:#0f172a;color:#e2e8f0;overflow:hidden;height:100vh}}
+  background:#1a2a1a;color:#e8efe4;overflow:hidden;height:100vh}}
 
 /* ---------- layout ---------- */
 #app{{display:flex;height:100vh}}
 #panel{{width:420px;min-width:360px;display:flex;flex-direction:column;
-  background:linear-gradient(180deg,#1e293b 0%,#0f172a 100%);
-  border-right:1px solid #334155;z-index:1000;position:relative}}
+  background:linear-gradient(180deg,#243424 0%,#1a2a1a 100%);
+  border-right:1px solid #3d5a3d;z-index:1000;position:relative}}
 #map-wrap{{flex:1;position:relative}}
 #map{{height:100%;width:100%}}
 
 /* ---------- panel elements ---------- */
 .panel-header{{text-align:center;padding:28px 20px 12px}}
 .panel-header h1{{font-size:1.6rem;font-weight:700;
-  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  background:linear-gradient(135deg,#86c06c,#d4a76a);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
-.panel-header p{{font-size:.85rem;color:#94a3b8;margin-top:6px}}
+.panel-header p{{font-size:.85rem;color:#8fa88f;margin-top:6px}}
 
 /* stats bar */
-.stats{{display:flex;justify-content:center;gap:16px;padding:10px;font-size:.78rem;color:#64748b}}
-.stats span{{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:4px 12px}}
-.stats em{{color:#38bdf8;font-style:normal;font-weight:600}}
+.stats{{display:flex;justify-content:center;gap:16px;padding:10px;font-size:.78rem;color:#6b8a6b}}
+.stats span{{background:#2d3f2d;border:1px solid #3d5a3d;border-radius:8px;padding:4px 12px}}
+.stats em{{color:#86c06c;font-style:normal;font-weight:600}}
 
 /* slot machine */
 .slot-wrap{{flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:10px 24px;gap:12px;overflow-y:auto;min-height:0}}
 .slot-window{{width:100%;height:200px;border-radius:16px;overflow:hidden;position:relative;
-  background:#0f172a;border:2px solid #334155;
-  box-shadow:inset 0 0 40px rgba(56,189,248,.06)}}
-.slot-window.spinning{{border-color:#818cf8;
-  box-shadow:inset 0 0 40px rgba(129,140,248,.15),0 0 30px rgba(129,140,248,.1)}}
-.slot-window.landed{{border-color:#38bdf8;
-  box-shadow:inset 0 0 40px rgba(56,189,248,.2),0 0 40px rgba(56,189,248,.15)}}
+  background:#1a2a1a;border:2px solid #3d5a3d;
+  box-shadow:inset 0 0 40px rgba(134,192,108,.06)}}
+.slot-window.spinning{{border-color:#86c06c;
+  box-shadow:inset 0 0 40px rgba(134,192,108,.15),0 0 30px rgba(134,192,108,.1)}}
+.slot-window.landed{{border-color:#d4a76a;
+  box-shadow:inset 0 0 40px rgba(212,167,106,.2),0 0 40px rgba(212,167,106,.15)}}
 
 /* mask gradients at top/bottom of slot */
 .slot-window::before,.slot-window::after{{content:'';position:absolute;left:0;right:0;
   height:50px;z-index:2;pointer-events:none}}
-.slot-window::before{{top:0;background:linear-gradient(#0f172a,transparent)}}
-.slot-window::after{{bottom:0;background:linear-gradient(transparent,#0f172a)}}
+.slot-window::before{{top:0;background:linear-gradient(#1a2a1a,transparent)}}
+.slot-window::after{{bottom:0;background:linear-gradient(transparent,#1a2a1a)}}
 
 .slot-track{{position:absolute;left:0;right:0;transition:none;will-change:transform}}
 .slot-item{{height:50px;display:flex;align-items:center;justify-content:center;
-  font-size:1.25rem;color:#64748b;white-space:nowrap}}
+  font-size:1.25rem;color:#5a7a5a;white-space:nowrap}}
 .slot-item.highlight{{color:#f1f5f9;font-size:1.6rem;font-weight:700;
-  text-shadow:0 0 20px rgba(56,189,248,.5)}}
+  text-shadow:0 0 20px rgba(212,167,106,.5)}}
 
 /* result card */
-.result-card{{width:100%;background:linear-gradient(135deg,#1e293b,#1a1f35);
+.result-card{{width:100%;background:linear-gradient(135deg,#2d3f2d,#253525);
   border-radius:16px;padding:20px;text-align:center;
-  border:1px solid #334155;min-height:110px;
+  border:1px solid #3d5a3d;min-height:110px;
   display:flex;flex-direction:column;align-items:center;justify-content:center}}
-.result-card.has-result{{border-color:#38bdf8;
-  box-shadow:0 0 30px rgba(56,189,248,.1)}}
+.result-card.has-result{{border-color:#d4a76a;
+  box-shadow:0 0 30px rgba(212,167,106,.1)}}
 .result-card .station-name{{font-size:2rem;font-weight:800;
-  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  background:linear-gradient(135deg,#86c06c,#d4a76a);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
-.result-card .station-meta{{font-size:.9rem;color:#94a3b8;margin-top:6px}}
-.result-card .placeholder{{color:#475569;font-size:.95rem}}
-.result-card .station-quote{{font-size:.82rem;color:#94a3b8;margin-top:10px;
+.result-card .station-meta{{font-size:.9rem;color:#8fa88f;margin-top:6px}}
+.result-card .placeholder{{color:#5a7a5a;font-size:.95rem}}
+.result-card .station-quote{{font-size:.82rem;color:#8fa88f;margin-top:10px;
   font-style:italic;line-height:1.5;opacity:0;animation:quoteFade 1s .3s ease forwards}}
 @keyframes quoteFade{{0%{{opacity:0;transform:translateY(6px)}}
   100%{{opacity:1;transform:translateY(0)}}}}
@@ -832,40 +832,40 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 /* ---------- floating reveal overlay ---------- */
 .reveal-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9500;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(15,23,42,.6);backdrop-filter:blur(6px);
+  background:rgba(20,35,20,.7);backdrop-filter:blur(6px);
   opacity:0;pointer-events:none;transition:opacity .4s}}
 .reveal-overlay.active{{opacity:1;pointer-events:auto}}
 .reveal-card{{max-width:360px;width:90%;padding:32px 28px;border-radius:20px;
-  background:linear-gradient(145deg,#1e293b 0%,#1a1f35 100%);
-  border:1px solid rgba(56,189,248,.3);text-align:center;
-  box-shadow:0 0 60px rgba(56,189,248,.12),0 20px 60px rgba(0,0,0,.4);
+  background:linear-gradient(145deg,#2d3f2d 0%,#253525 100%);
+  border:1px solid rgba(212,167,106,.3);text-align:center;
+  box-shadow:0 0 60px rgba(134,192,108,.1),0 20px 60px rgba(0,0,0,.4);
   transform:scale(0.85) translateY(20px);opacity:0;
   transition:all .5s cubic-bezier(.34,1.56,.64,1)}}
 .reveal-overlay.active .reveal-card{{transform:scale(1) translateY(0);opacity:1}}
-.reveal-card .rv-line{{font-size:.7rem;color:#475569;text-transform:uppercase;
+.reveal-card .rv-line{{font-size:.7rem;color:#5a7a5a;text-transform:uppercase;
   letter-spacing:3px;margin-bottom:12px}}
 .reveal-card .rv-name{{font-size:2.4rem;font-weight:900;
-  background:linear-gradient(135deg,#38bdf8,#818cf8,#f472b6);
+  background:linear-gradient(135deg,#86c06c,#d4a76a,#c9956b);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   line-height:1.2}}
-.reveal-card .rv-meta{{font-size:.85rem;color:#94a3b8;margin-top:8px}}
+.reveal-card .rv-meta{{font-size:.85rem;color:#8fa88f;margin-top:8px}}
 .reveal-card .rv-divider{{width:40px;height:2px;margin:16px auto;
-  background:linear-gradient(90deg,transparent,#38bdf8,transparent);border-radius:1px}}
-.reveal-card .rv-quote{{font-size:.88rem;color:#cbd5e1;font-style:italic;
+  background:linear-gradient(90deg,transparent,#d4a76a,transparent);border-radius:1px}}
+.reveal-card .rv-quote{{font-size:.88rem;color:#c4d4c0;font-style:italic;
   line-height:1.6;opacity:0;animation:quoteFade .8s .5s ease forwards}}
-.reveal-card .rv-tap{{font-size:.65rem;color:#475569;margin-top:20px;
+.reveal-card .rv-tap{{font-size:.65rem;color:#5a7a5a;margin-top:20px;
   letter-spacing:1px}}
 
 /* info panel (food & sight) */
 .info-panel{{width:100%;display:none;gap:10px;max-height:260px;overflow-y:auto;
-  padding:2px 0;scrollbar-width:thin;scrollbar-color:#334155 transparent}}
+  padding:2px 0;scrollbar-width:thin;scrollbar-color:#3d5a3d transparent}}
 .info-panel.visible{{display:flex;flex-direction:column}}
 .info-section{{padding:0}}
 .info-section-title{{font-size:.78rem;font-weight:700;margin-bottom:6px;
   display:flex;align-items:center;gap:6px;padding-left:2px;
   text-transform:uppercase;letter-spacing:1px}}
-.info-section-title.food-title{{color:#fbbf24}}
-.info-section-title.sight-title{{color:#34d399}}
+.info-section-title.food-title{{color:#d4a76a}}
+.info-section-title.sight-title{{color:#86c06c}}
 .info-cards{{display:flex;flex-direction:column;gap:6px}}
 
 /* individual card */
@@ -877,24 +877,24 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 .info-card .card-emoji{{font-size:1.5rem;flex-shrink:0;
   width:38px;height:38px;display:flex;align-items:center;justify-content:center;
   border-radius:10px;background:rgba(255,255,255,.06)}}
-.info-card .card-text{{font-size:.82rem;color:#e2e8f0;font-weight:500;
+.info-card .card-text{{font-size:.82rem;color:#e8efe4;font-weight:500;
   line-height:1.3}}
 
 /* food card warm tones */
 .info-card.food-card{{
-  background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,146,60,.04));
-  border:1px solid rgba(251,191,36,.2)}}
+  background:linear-gradient(135deg,rgba(212,167,106,.1),rgba(201,149,107,.05));
+  border:1px solid rgba(212,167,106,.25)}}
 .info-card.food-card:hover{{
-  border-color:rgba(251,191,36,.4);
-  box-shadow:0 0 16px rgba(251,191,36,.1)}}
+  border-color:rgba(212,167,106,.45);
+  box-shadow:0 0 16px rgba(212,167,106,.1)}}
 
-/* sight card cool tones */
+/* sight card forest tones */
 .info-card.sight-card{{
-  background:linear-gradient(135deg,rgba(52,211,153,.08),rgba(56,189,248,.04));
-  border:1px solid rgba(52,211,153,.2)}}
+  background:linear-gradient(135deg,rgba(134,192,108,.1),rgba(111,165,90,.05));
+  border:1px solid rgba(134,192,108,.25)}}
 .info-card.sight-card:hover{{
-  border-color:rgba(52,211,153,.4);
-  box-shadow:0 0 16px rgba(52,211,153,.1)}}
+  border-color:rgba(134,192,108,.45);
+  box-shadow:0 0 16px rgba(134,192,108,.1)}}
 
 /* stagger animation */
 @keyframes cardFadeIn{{
@@ -904,67 +904,67 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 /* button */
 .btn-draw{{width:100%;padding:16px;border:none;border-radius:14px;cursor:pointer;
   font-size:1.15rem;font-weight:700;letter-spacing:2px;
-  background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;
-  box-shadow:0 4px 20px rgba(99,102,241,.35);transition:all .2s}}
-.btn-draw:hover{{transform:translateY(-2px);box-shadow:0 6px 28px rgba(99,102,241,.45)}}
+  background:linear-gradient(135deg,#6fa55a,#86c06c);color:#fff;
+  box-shadow:0 4px 20px rgba(111,165,90,.35);transition:all .2s}}
+.btn-draw:hover{{transform:translateY(-2px);box-shadow:0 6px 28px rgba(111,165,90,.45)}}
 .btn-draw:active{{transform:translateY(0)}}
 .btn-draw:disabled{{opacity:.5;cursor:not-allowed;transform:none}}
 
 /* bottom controls */
 .controls{{padding:16px 24px 24px;display:flex;flex-direction:column;gap:12px}}
 .count-row{{display:flex;align-items:center;justify-content:center;gap:12px}}
-.count-row label{{font-size:.85rem;color:#94a3b8}}
-.count-row select{{background:#1e293b;border:1px solid #334155;color:#e2e8f0;
+.count-row label{{font-size:.85rem;color:#8fa88f}}
+.count-row select{{background:#2d3f2d;border:1px solid #3d5a3d;color:#e8efe4;
   border-radius:8px;padding:6px 14px;font-size:.95rem}}
 
 /* filter tags */
 .filter-group{{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}}
-.filter-group-label{{width:100%;text-align:center;font-size:.7rem;color:#475569;
+.filter-group-label{{width:100%;text-align:center;font-size:.7rem;color:#5a7a5a;
   text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}}
 .filter-tag{{padding:4px 12px;border-radius:8px;font-size:.75rem;cursor:pointer;
-  border:1px solid #334155;background:#1e293b;color:#64748b;
+  border:1px solid #3d5a3d;background:#2d3f2d;color:#5a7a5a;
   transition:all .2s;user-select:none}}
-.filter-tag.active{{background:linear-gradient(135deg,#6366f1,#818cf8);
-  color:#fff;border-color:#818cf8;box-shadow:0 2px 8px rgba(99,102,241,.3)}}
-.filter-tag:hover{{border-color:#6366f1}}
+.filter-tag.active{{background:linear-gradient(135deg,#6fa55a,#86c06c);
+  color:#fff;border-color:#86c06c;box-shadow:0 2px 8px rgba(111,165,90,.3)}}
+.filter-tag:hover{{border-color:#86c06c}}
 
 /* progress bar */
 .progress-wrap{{width:100%;padding:0 24px;margin-top:2px}}
-.progress-bar{{width:100%;height:4px;background:#1e293b;border-radius:2px;overflow:hidden}}
+.progress-bar{{width:100%;height:4px;background:#2d3f2d;border-radius:2px;overflow:hidden}}
 .progress-fill{{height:100%;border-radius:2px;transition:width .5s ease;
-  background:linear-gradient(90deg,#6366f1,#38bdf8)}}
+  background:linear-gradient(90deg,#6fa55a,#d4a76a)}}
 .progress-label{{display:flex;justify-content:center;align-items:center;gap:8px;
-  font-size:.72rem;color:#64748b;margin-top:4px}}
-.progress-label em{{color:#38bdf8;font-style:normal;font-weight:600}}
-.btn-reset{{background:none;border:1px solid #334155;color:#64748b;
+  font-size:.72rem;color:#5a7a5a;margin-top:4px}}
+.progress-label em{{color:#86c06c;font-style:normal;font-weight:600}}
+.btn-reset{{background:none;border:1px solid #3d5a3d;color:#5a7a5a;
   padding:2px 8px;border-radius:4px;font-size:.65rem;cursor:pointer;transition:all .2s}}
-.btn-reset:hover{{border-color:#f87171;color:#f87171}}
+.btn-reset:hover{{border-color:#c97a5a;color:#c97a5a}}
 
 /* conquer overlay */
 .conquer-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;
   z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(15,23,42,.9);opacity:0;transition:opacity .5s;pointer-events:none}}
+  background:rgba(20,35,20,.92);opacity:0;transition:opacity .5s;pointer-events:none}}
 .conquer-overlay.active{{opacity:1;pointer-events:auto}}
 .conquer-title{{font-size:3rem;font-weight:900;
-  background:linear-gradient(135deg,#fbbf24,#f472b6,#818cf8);
+  background:linear-gradient(135deg,#d4a76a,#86c06c,#b8d4a0);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  text-shadow:0 0 80px rgba(251,191,36,.4)}}
-.conquer-sub{{font-size:1.2rem;color:#94a3b8;margin-top:12px}}
+  text-shadow:0 0 80px rgba(212,167,106,.4)}}
+.conquer-sub{{font-size:1.2rem;color:#8fa88f;margin-top:12px}}
 
 /* history */
 .history{{padding:0 24px 16px;max-height:90px;overflow-y:auto}}
-.history h3{{font-size:.78rem;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}}
+.history h3{{font-size:.78rem;color:#5a7a5a;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}}
 .history-list{{display:flex;flex-wrap:wrap;gap:6px}}
-.history-tag{{background:#1e293b;border:1px solid #334155;border-radius:6px;
-  padding:2px 10px;font-size:.75rem;color:#94a3b8}}
+.history-tag{{background:#2d3f2d;border:1px solid #3d5a3d;border-radius:6px;
+  padding:2px 10px;font-size:.75rem;color:#8fa88f}}
 
 /* ---------- map custom ---------- */
-.leaflet-popup-content-wrapper{{background:#1e293b;color:#e2e8f0;border:1px solid #334155;
+.leaflet-popup-content-wrapper{{background:#2d3f2d;color:#e8efe4;border:1px solid #3d5a3d;
   border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5)}}
-.leaflet-popup-tip{{background:#1e293b}}
+.leaflet-popup-tip{{background:#2d3f2d}}
 .leaflet-popup-content{{font-family:inherit;font-size:.9rem;margin:12px 16px}}
-.popup-name{{font-size:1.1rem;font-weight:700;color:#38bdf8}}
-.popup-meta{{color:#94a3b8;font-size:.8rem;margin-top:4px}}
+.popup-name{{font-size:1.1rem;font-weight:700;color:#86c06c}}
+.popup-meta{{color:#8fa88f;font-size:.8rem;margin-top:4px}}
 
 /* pulse marker */
 @keyframes pulse{{
@@ -973,7 +973,7 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   100%{{transform:scale(2.4);opacity:0}}
 }}
 .marker-pulse{{position:absolute;width:24px;height:24px;border-radius:50%;
-  background:rgba(56,189,248,.5);animation:pulse 1.5s ease-out infinite}}
+  background:rgba(212,167,106,.5);animation:pulse 1.5s ease-out infinite}}
 
 /* sparkles (warm floating) */
 @keyframes sparkle-drift{{
@@ -989,14 +989,14 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 /* ---------- countdown overlay ---------- */
 .countdown-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;
   z-index:9999;display:flex;align-items:center;justify-content:center;
-  background:rgba(15,23,42,.85);pointer-events:none;opacity:0;transition:opacity .3s}}
+  background:rgba(20,35,20,.88);pointer-events:none;opacity:0;transition:opacity .3s}}
 .countdown-overlay.active{{opacity:1}}
 .countdown-num{{font-size:8rem;font-weight:900;color:transparent;
-  background:linear-gradient(135deg,#38bdf8,#818cf8,#f472b6);
-  -webkit-background-clip:text;text-shadow:0 0 80px rgba(56,189,248,.5);
+  background:linear-gradient(135deg,#86c06c,#d4a76a,#c9956b);
+  -webkit-background-clip:text;text-shadow:0 0 80px rgba(134,192,108,.5);
   animation:countPop .6s ease-out forwards}}
 .countdown-num.go{{font-size:5rem;letter-spacing:8px;
-  background:linear-gradient(135deg,#fbbf24,#fb923c,#f472b6);
+  background:linear-gradient(135deg,#d4a76a,#c9956b,#86c06c);
   -webkit-background-clip:text}}
 @keyframes countPop{{
   0%{{transform:scale(0.3);opacity:0}}
@@ -1006,14 +1006,14 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
 /* ---------- suspense text ---------- */
 .suspense-text{{position:absolute;bottom:12px;left:0;right:0;text-align:center;
-  font-size:.82rem;color:#818cf8;z-index:4;opacity:0;
+  font-size:.82rem;color:#86c06c;z-index:4;opacity:0;
   transition:opacity .4s;pointer-events:none;font-style:italic}}
 .suspense-text.visible{{opacity:1}}
 
 /* ---------- screen flash (warm bloom) ---------- */
 .screen-flash{{position:fixed;top:0;left:0;width:100%;height:100%;
   z-index:9998;pointer-events:none;opacity:0;
-  background:radial-gradient(circle,rgba(251,191,36,.25),rgba(129,140,248,.08) 60%,transparent 80%)}}
+  background:radial-gradient(circle,rgba(212,167,106,.25),rgba(134,192,108,.08) 60%,transparent 80%)}}
 .screen-flash.flash{{animation:warmBloom 1.2s ease-out forwards}}
 @keyframes warmBloom{{
   0%{{opacity:0}}
@@ -1027,9 +1027,9 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   100%{{opacity:1;transform:translateY(0)}}
 }}
 @keyframes revealWarmGlow{{
-  0%{{box-shadow:0 0 0 rgba(251,191,36,0)}}
-  40%{{box-shadow:0 0 40px rgba(251,191,36,.15),0 0 80px rgba(56,189,248,.08)}}
-  100%{{box-shadow:0 0 20px rgba(251,191,36,.06)}}
+  0%{{box-shadow:0 0 0 rgba(212,167,106,0)}}
+  40%{{box-shadow:0 0 40px rgba(212,167,106,.15),0 0 80px rgba(134,192,108,.08)}}
+  100%{{box-shadow:0 0 20px rgba(212,167,106,.06)}}
 }}
 .result-card.reveal-anim{{
   animation:revealFadeUp .6s ease-out,revealWarmGlow 1.5s ease-out}}
@@ -1062,7 +1062,7 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   html,body{{overflow:auto !important;height:auto !important}}
   #app{{flex-direction:column;height:auto;min-height:auto}}
   #panel{{width:100%;min-width:0;height:auto;max-height:none;
-    border-right:none;border-bottom:1px solid #334155;overflow:visible}}
+    border-right:none;border-bottom:1px solid #3d5a3d;overflow:visible}}
   #map-wrap{{width:100%;height:50vh;min-height:300px;position:relative;flex-shrink:0}}
   #map{{height:100% !important;width:100% !important;min-height:300px}}
 
@@ -1070,10 +1070,10 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
     z-index:9000;min-height:100vh}}
   #map-wrap.map-expanded #map{{height:100vh !important;min-height:100vh}}
   .map-close-btn{{display:none;position:fixed;top:16px;right:16px;z-index:9001;
-    background:rgba(15,23,42,.85);color:#e2e8f0;border:1px solid #475569;
+    background:rgba(20,35,20,.85);color:#e8efe4;border:1px solid #5a7a5a;
     border-radius:50%;width:40px;height:40px;font-size:1.2rem;cursor:pointer;
     backdrop-filter:blur(4px);transition:all .2s}}
-  .map-close-btn:hover{{background:rgba(239,68,68,.7);border-color:#f87171}}
+  .map-close-btn:hover{{background:rgba(201,122,90,.7);border-color:#c9956b}}
   #map-wrap.map-expanded ~ .map-close-btn,
   .map-close-btn.visible{{display:flex;align-items:center;justify-content:center}}
 
@@ -1192,7 +1192,7 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
     <div class="history" id="historyWrap">
       <h3>抽籤記錄</h3>
       <div class="history-list" id="historyList">
-        <span class="history-tag" style="color:#475569">尚無記錄</span>
+        <span class="history-tag" style="color:#5a7a5a">尚無記錄</span>
       </div>
     </div>
   </div>
@@ -1225,10 +1225,10 @@ const REGION_MAP = {{
   '東部': ['宜蘭縣','花蓮縣','臺東縣'],
 }};
 const REGION_COLORS = {{
-  '北部': {{ fill: '#38bdf8', border: '#0ea5e9' }},
-  '中部': {{ fill: '#34d399', border: '#10b981' }},
-  '南部': {{ fill: '#fbbf24', border: '#f59e0b' }},
-  '東部': {{ fill: '#f472b6', border: '#ec4899' }},
+  '北部': {{ fill: '#7bb8d4', border: '#5a9ab8' }},
+  '中部': {{ fill: '#86c06c', border: '#6fa55a' }},
+  '南部': {{ fill: '#d4a76a', border: '#c9956b' }},
+  '東部': {{ fill: '#c08090', border: '#a06878' }},
 }};
 const CITY_TO_REGION = {{}};
 Object.entries(REGION_MAP).forEach(([region, cities]) => {{
@@ -1362,7 +1362,7 @@ function playDrumRoll() {{
 // ============================================================
 (function initParticles() {{
   const container = document.getElementById('particlesContainer');
-  const colors = ['#38bdf8','#818cf8','#6366f1','#f472b6','#34d399'];
+  const colors = ['#86c06c','#b8d4a0','#d4a76a','#c9956b','#6fa55a'];
   for (let i = 0; i < 25; i++) {{
     const p = document.createElement('div');
     p.className = 'particle';
@@ -1390,7 +1390,7 @@ const map = L.map('map', {{
 L.control.zoom({{ position: 'bottomright' }}).addTo(map);
 L.control.attribution({{ position: 'bottomleft' }}).addTo(map);
 
-L.tileLayer('https://{{s}}.basemaps.cartocdn.com/dark_all/{{z}}/{{x}}/{{y}}{{r}}.png', {{
+L.tileLayer('https://{{s}}.basemaps.cartocdn.com/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
   subdomains: 'abcd',
   maxZoom: 19,
@@ -1408,7 +1408,7 @@ const markerLayers = {{}};
 
 expressStations.forEach(s => {{
   const m = L.circleMarker([s.lat, s.lng], {{
-    radius: 3, fillColor: '#475569', color: '#334155',
+    radius: 3, fillColor: '#7a9a7a', color: '#5a7a5a',
     weight: 1, fillOpacity: 0.5,
   }}).addTo(map);
   m.bindTooltip(s.name, {{ className: 'dark-tooltip', direction: 'top', offset: [0,-5] }});
@@ -1468,7 +1468,7 @@ function addResultMarker(station) {{
   resultMarkers.push(pm);
 
   const cm = L.circleMarker([station.lat, station.lng], {{
-    radius: 10, fillColor: '#38bdf8', color: '#fff',
+    radius: 10, fillColor: '#d4a76a', color: '#fff',
     weight: 2, fillOpacity: 0.9,
   }}).addTo(map);
   cm.bindPopup(
@@ -1493,7 +1493,7 @@ function restoreMarkerStyle(name) {{
   const region = CITY_TO_REGION[s.city] || '北部';
   const rc = REGION_COLORS[region];
   const active = activeRegions.has(region);
-  m.setStyle({{ fillColor: active ? rc.fill : '#334155', color: active ? rc.border : '#1e293b',
+  m.setStyle({{ fillColor: active ? rc.fill : '#5a7a5a', color: active ? rc.border : '#3d5a3d',
     fillOpacity: active ? 0.7 : 0.15 }});
   m.setRadius(active ? 5 : 3);
 }}
@@ -1508,7 +1508,7 @@ function startMapFlicker() {{
       const s = candidates[Math.floor(Math.random() * candidates.length)];
       const m = markerLayers[s.name];
       if (m) {{
-        m.setStyle({{ fillColor: '#fbbf24', color: '#f59e0b', fillOpacity: 1 }});
+        m.setStyle({{ fillColor: '#d4a76a', color: '#c9956b', fillOpacity: 1 }});
         m.setRadius(9);
         flickerHighlighted.push(s.name);
       }}
@@ -1592,7 +1592,7 @@ function runCountdown() {{
 // ============================================================
 function spawnSparkles() {{
   const wrap = slotWindow;
-  const colors = ['#fbbf24','#fde68a','#fef3c7','#38bdf8','#818cf8','#f472b6'];
+  const colors = ['#d4a76a','#e8d4b0','#f5eed8','#86c06c','#b8d4a0','#c9956b'];
   for (let i = 0; i < 25; i++) {{
     const s = document.createElement('div');
     s.className = 'sparkle';
@@ -1610,7 +1610,7 @@ function spawnSparkles() {{
 }}
 
 function spawnMotes() {{
-  const colors = ['#fbbf24','#fde68a','#38bdf8','#818cf8','#34d399','#f472b6','#e879f9'];
+  const colors = ['#d4a76a','#e8d4b0','#86c06c','#b8d4a0','#6fa55a','#c9956b','#a8c890'];
   for (let i = 0; i < 35; i++) {{
     const m = document.createElement('div');
     m.className = 'mote';
@@ -1940,8 +1940,8 @@ function updateMapRegions() {{
     const active = activeRegions.has(region);
     const rc = REGION_COLORS[region] || REGION_COLORS['北部'];
     m.setStyle({{
-      fillColor: active ? rc.fill : '#334155',
-      color: active ? rc.border : '#1e293b',
+      fillColor: active ? rc.fill : '#5a7a5a',
+      color: active ? rc.border : '#3d5a3d',
       fillOpacity: active ? 0.7 : 0.15,
     }});
     m.setRadius(active ? 5 : 3);
@@ -1992,7 +1992,7 @@ function resetProgress() {{
 function renderHistory() {{
   const list = document.getElementById('historyList');
   if (historyData.length === 0) {{
-    list.innerHTML = '<span class="history-tag" style="color:#475569">尚無記錄</span>';
+    list.innerHTML = '<span class="history-tag" style="color:#5a7a5a">尚無記錄</span>';
     return;
   }}
   list.innerHTML = historyData.slice(0, 50).map(h => {{
