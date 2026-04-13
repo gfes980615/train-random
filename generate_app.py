@@ -5,6 +5,7 @@
 """
 
 import csv, json, os
+from station_quotes import STATION_QUOTES
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "taiwan_railway_stations.csv")
 OUT_PATH = os.path.join(os.path.dirname(__file__), "draw_station.html")
@@ -753,6 +754,7 @@ def main():
     data_json = json.dumps(stations, ensure_ascii=False)
     candidates_json = json.dumps(candidates, ensure_ascii=False)
     info_json = json.dumps(STATION_INFO, ensure_ascii=False)
+    quotes_json = json.dumps(STATION_QUOTES, ensure_ascii=False)
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
@@ -822,6 +824,10 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
 .result-card .station-meta{{font-size:.9rem;color:#94a3b8;margin-top:6px}}
 .result-card .placeholder{{color:#475569;font-size:.95rem}}
+.result-card .station-quote{{font-size:.82rem;color:#94a3b8;margin-top:10px;
+  font-style:italic;line-height:1.5;opacity:0;animation:quoteFade 1s .3s ease forwards}}
+@keyframes quoteFade{{0%{{opacity:0;transform:translateY(6px)}}
+  100%{{opacity:1;transform:translateY(0)}}}}
 
 /* info panel (food & sight) */
 .info-panel{{width:100%;display:none;gap:10px;max-height:260px;overflow-y:auto;
@@ -942,14 +948,15 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 .marker-pulse{{position:absolute;width:24px;height:24px;border-radius:50%;
   background:rgba(56,189,248,.5);animation:pulse 1.5s ease-out infinite}}
 
-/* confetti */
-@keyframes confetti-fall{{
-  0%{{transform:translateY(-10px) rotate(0deg) scale(1);opacity:1}}
-  70%{{opacity:1}}
-  100%{{transform:translateY(350px) rotate(1080deg) scale(0.3);opacity:0}}
+/* sparkles (gentle floating) */
+@keyframes sparkle-drift{{
+  0%{{transform:translateY(0) scale(0);opacity:0}}
+  20%{{opacity:.8;transform:translateY(-30px) scale(1)}}
+  80%{{opacity:.4}}
+  100%{{transform:translateY(-120px) scale(0.3);opacity:0}}
 }}
-.confetti{{position:absolute;width:10px;height:10px;border-radius:2px;
-  animation:confetti-fall 2.2s ease-in forwards;pointer-events:none;z-index:3}}
+.sparkle{{position:absolute;border-radius:50%;
+  animation:sparkle-drift 2.5s ease-out forwards;pointer-events:none;z-index:3}}
 
 /* ---------- countdown overlay ---------- */
 .countdown-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;
@@ -975,29 +982,28 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   transition:opacity .4s;pointer-events:none;font-style:italic}}
 .suspense-text.visible{{opacity:1}}
 
-/* ---------- screen flash ---------- */
+/* ---------- screen flash (soft warm glow) ---------- */
 .screen-flash{{position:fixed;top:0;left:0;width:100%;height:100%;
   z-index:9998;pointer-events:none;opacity:0;
-  background:radial-gradient(circle,rgba(56,189,248,.4),transparent 70%)}}
-.screen-flash.flash{{animation:flashBang .5s ease-out forwards}}
-@keyframes flashBang{{
-  0%{{opacity:1}}
+  background:radial-gradient(circle,rgba(251,191,36,.18),transparent 70%)}}
+.screen-flash.flash{{animation:softGlow .8s ease-out forwards}}
+@keyframes softGlow{{
+  0%{{opacity:.8}}
   100%{{opacity:0}}
 }}
 
 /* ---------- result reveal ---------- */
-@keyframes revealShake{{
-  0%,100%{{transform:translateX(0)}}
-  10%,30%,50%,70%,90%{{transform:translateX(-4px)}}
-  20%,40%,60%,80%{{transform:translateX(4px)}}
+@keyframes revealFadeUp{{
+  0%{{opacity:0;transform:translateY(12px)}}
+  100%{{opacity:1;transform:translateY(0)}}
 }}
-@keyframes revealGlow{{
-  0%{{box-shadow:0 0 0 rgba(56,189,248,0)}}
-  50%{{box-shadow:0 0 60px rgba(56,189,248,.4),0 0 120px rgba(129,140,248,.2)}}
-  100%{{box-shadow:0 0 30px rgba(56,189,248,.15)}}
+@keyframes revealWarmGlow{{
+  0%{{box-shadow:0 0 0 rgba(251,191,36,0)}}
+  40%{{box-shadow:0 0 40px rgba(251,191,36,.15),0 0 80px rgba(56,189,248,.08)}}
+  100%{{box-shadow:0 0 20px rgba(251,191,36,.06)}}
 }}
 .result-card.reveal-anim{{
-  animation:revealShake .5s ease-out,revealGlow 1.2s ease-out}}
+  animation:revealFadeUp .6s ease-out,revealWarmGlow 1.5s ease-out}}
 
 /* ---------- floating particles ---------- */
 .particles-container{{position:fixed;top:0;left:0;width:100%;height:100%;
@@ -1011,14 +1017,14 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   100%{{opacity:0;transform:translateY(-10vh) scale(1)}}
 }}
 
-/* ---------- big confetti full screen ---------- */
-@keyframes confetti-full{{
-  0%{{transform:translateY(-20px) rotate(0deg) scale(1);opacity:1}}
-  80%{{opacity:.8}}
-  100%{{transform:translateY(100vh) rotate(1440deg) scale(0.2);opacity:0}}
+/* ---------- floating motes (ambient reveal) ---------- */
+@keyframes mote-rise{{
+  0%{{transform:translateY(20px) scale(0);opacity:0}}
+  30%{{opacity:.6;transform:translateY(0) scale(1)}}
+  100%{{transform:translateY(-80vh) scale(0.2);opacity:0}}
 }}
-.confetti-big{{position:fixed;z-index:9997;pointer-events:none;
-  animation:confetti-full 3s ease-in forwards}}
+.mote{{position:fixed;z-index:9997;pointer-events:none;border-radius:50%;
+  animation:mote-rise 4s ease-out forwards}}
 
 /* responsive */
 @media(max-width:800px){{
@@ -1166,6 +1172,7 @@ const allStations  = {data_json};
 const candidates   = {candidates_json};
 const expressStations = allStations.filter(s => s.express);
 const stationInfo = {info_json};
+const stationQuotes = {quotes_json};
 
 // ============================================================
 // Filter & Progress State
@@ -1267,22 +1274,23 @@ function playCountdownBeep(isGo) {{
   osc.stop(audioCtx.currentTime + (isGo ? 0.3 : 0.15));
 }}
 
-function playFanfare() {{
+function playArrivalChime() {{
   ensureAudio();
-  const notes = [523, 659, 784, 1047];
+  // gentle two-note train arrival chime (like Japanese station melody)
+  const notes = [659, 523];
   notes.forEach((freq, i) => {{
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = 'triangle';
+    osc.type = 'sine';
     osc.frequency.value = freq;
-    const t = audioCtx.currentTime + i * 0.12;
+    const t = audioCtx.currentTime + i * 0.3;
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.12, t + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    gain.gain.linearRampToValueAtTime(0.08, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start(t);
-    osc.stop(t + 0.5);
+    osc.stop(t + 0.8);
   }});
 }}
 
@@ -1474,14 +1482,14 @@ function stopMapFlicker() {{
 // Suspense Text
 // ============================================================
 const suspenseMessages = [
-  '命運之輪啟動中...',
-  '宇宙正在為你挑選...',
-  '車站們在竊竊私語...',
-  '鐵軌的盡頭是驚喜...',
-  '月台正在向你招手...',
-  '列車即將抵達命運站...',
-  '緣分正在加速中...',
-  '秘境小站已經迫不及待了...',
+  '列車正駛向未知的風景...',
+  '窗外的光影正在變換...',
+  '下一站，是專屬於你的故事...',
+  '鐵軌的那一端，有風在等你...',
+  '旅途的驚喜正在醞釀...',
+  '慢慢來，好風景不會跑走...',
+  '車輪轉動，帶你去一個溫柔的地方...',
+  '這班列車，只為你停靠...',
 ];
 let suspenseTimer = null;
 const suspenseEl = document.getElementById('suspenseText');
@@ -1513,7 +1521,7 @@ function runCountdown() {{
   return new Promise(resolve => {{
     const overlay = document.getElementById('countdownOverlay');
     overlay.classList.add('active');
-    const steps = ['3', '2', '1', 'GO!'];
+    const steps = ['3', '2', '1', '出發'];
     let i = 0;
 
     function showStep() {{
@@ -1537,41 +1545,40 @@ function runCountdown() {{
 // ============================================================
 // Enhanced Confetti
 // ============================================================
-function spawnConfetti() {{
+function spawnSparkles() {{
   const wrap = slotWindow;
-  const colors = ['#38bdf8','#818cf8','#f472b6','#34d399','#fbbf24','#fb923c'];
-  for (let i = 0; i < 50; i++) {{
-    const c = document.createElement('div');
-    c.className = 'confetti';
-    c.style.left = Math.random() * 100 + '%';
-    c.style.top = (30 + Math.random() * 20) + '%';
-    c.style.background = colors[Math.floor(Math.random() * colors.length)];
-    c.style.animationDelay = (Math.random() * 0.5) + 's';
-    c.style.animationDuration = (1.5 + Math.random() * 1) + 's';
-    c.style.width = (6 + Math.random() * 8) + 'px';
-    c.style.height = (6 + Math.random() * 8) + 'px';
-    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-    wrap.appendChild(c);
-    setTimeout(() => c.remove(), 3000);
+  const colors = ['#fbbf24','#fde68a','#fef3c7','#38bdf8','#818cf8'];
+  for (let i = 0; i < 15; i++) {{
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.left = (20 + Math.random() * 60) + '%';
+    s.style.bottom = (10 + Math.random() * 30) + '%';
+    s.style.background = colors[Math.floor(Math.random() * colors.length)];
+    s.style.animationDelay = (Math.random() * 0.8) + 's';
+    s.style.animationDuration = (2 + Math.random() * 1) + 's';
+    const size = 3 + Math.random() * 5;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    wrap.appendChild(s);
+    setTimeout(() => s.remove(), 4000);
   }}
 }}
 
-function spawnFullScreenConfetti() {{
-  const colors = ['#38bdf8','#818cf8','#f472b6','#34d399','#fbbf24','#fb923c','#e879f9','#22d3ee'];
-  for (let i = 0; i < 60; i++) {{
-    const c = document.createElement('div');
-    c.className = 'confetti-big';
-    const size = 8 + Math.random() * 12;
-    c.style.width = size + 'px';
-    c.style.height = size + 'px';
-    c.style.left = Math.random() * 100 + 'vw';
-    c.style.top = '-20px';
-    c.style.background = colors[Math.floor(Math.random() * colors.length)];
-    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
-    c.style.animationDelay = (Math.random() * 0.8) + 's';
-    c.style.animationDuration = (2 + Math.random() * 2) + 's';
-    document.body.appendChild(c);
-    setTimeout(() => c.remove(), 5000);
+function spawnMotes() {{
+  const colors = ['#fbbf24','#fde68a','#38bdf8','#818cf8','#34d399'];
+  for (let i = 0; i < 20; i++) {{
+    const m = document.createElement('div');
+    m.className = 'mote';
+    const size = 3 + Math.random() * 6;
+    m.style.width = size + 'px';
+    m.style.height = size + 'px';
+    m.style.left = (10 + Math.random() * 80) + 'vw';
+    m.style.bottom = '0';
+    m.style.background = colors[Math.floor(Math.random() * colors.length)];
+    m.style.animationDelay = (Math.random() * 1.5) + 's';
+    m.style.animationDuration = (3 + Math.random() * 2) + 's';
+    document.body.appendChild(m);
+    setTimeout(() => m.remove(), 6000);
   }}
 }}
 
@@ -1695,11 +1702,11 @@ async function startDraw() {{
         stopSuspenseText();
         stopMapFlicker();
 
-        // big reveal!
-        playFanfare();
+        // gentle reveal
+        playArrivalChime();
         triggerScreenFlash();
-        spawnConfetti();
-        spawnFullScreenConfetti();
+        spawnSparkles();
+        spawnMotes();
 
         // show on map
         addResultMarker(winner);
@@ -1751,15 +1758,19 @@ function showResult(winners) {{
   resultCard.classList.add('has-result');
   if (winners.length === 1) {{
     const w = winners[0];
+    const quote = stationQuotes[w.name] || '';
     resultCard.innerHTML =
       '<div class="station-name">' + w.name + '</div>' +
-      '<div class="station-meta">' + w.city + ' \u00b7 ' + w.line + '</div>';
+      '<div class="station-meta">' + w.city + ' \u00b7 ' + w.line + '</div>' +
+      (quote ? '<div class="station-quote">\u300c' + quote + '\u300d</div>' : '');
   }} else {{
+    const lastWinner = winners[winners.length - 1];
+    const quote = stationQuotes[lastWinner.name] || '';
     resultCard.innerHTML = winners.map((w, i) =>
       '<div style="margin-bottom:4px">' +
       '<span class="station-name" style="font-size:1.3rem">[' + (i+1) + '] ' + w.name + '</span>' +
       ' <span class="station-meta" style="font-size:.78rem">' + w.city + '</span></div>'
-    ).join('');
+    ).join('') + (quote ? '<div class="station-quote">\u300c' + quote + '\u300d</div>' : '');
   }}
 }}
 
@@ -1924,8 +1935,8 @@ function checkConquer() {{
   if (drawnStations.size >= TOTAL_CANDIDATES) {{
     const overlay = document.getElementById('conquerOverlay');
     overlay.classList.add('active');
-    spawnFullScreenConfetti();
-    spawnFullScreenConfetti();
+    spawnMotes();
+    spawnMotes();
     setTimeout(() => overlay.classList.remove('active'), 4000);
   }}
 }}
