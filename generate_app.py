@@ -1029,6 +1029,17 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   #map-wrap{{width:100%;height:50vh;min-height:300px;position:relative;flex-shrink:0}}
   #map{{height:100% !important;width:100% !important;min-height:300px}}
 
+  #map-wrap.map-expanded{{position:fixed;top:0;left:0;width:100vw;height:100vh;
+    z-index:9000;min-height:100vh}}
+  #map-wrap.map-expanded #map{{height:100vh !important;min-height:100vh}}
+  .map-close-btn{{display:none;position:fixed;top:16px;right:16px;z-index:9001;
+    background:rgba(15,23,42,.85);color:#e2e8f0;border:1px solid #475569;
+    border-radius:50%;width:40px;height:40px;font-size:1.2rem;cursor:pointer;
+    backdrop-filter:blur(4px);transition:all .2s}}
+  .map-close-btn:hover{{background:rgba(239,68,68,.7);border-color:#f87171}}
+  #map-wrap.map-expanded ~ .map-close-btn,
+  .map-close-btn.visible{{display:flex;align-items:center;justify-content:center}}
+
   .panel-header{{padding:16px 16px 6px}}
   .panel-header h1{{font-size:1.3rem}}
   .panel-header p{{font-size:.75rem;margin-top:3px}}
@@ -1143,6 +1154,7 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
   <!-- ===== 右側地圖 ===== -->
   <div id="map-wrap"><div id="map"></div></div>
+  <button class="map-close-btn" id="mapCloseBtn" onclick="collapseMap()">&#10005;</button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1369,6 +1381,29 @@ function clearResultMarkers() {{
   resultMarkers = [];
 }}
 
+// ============================================================
+// Mobile Map Expand / Collapse
+// ============================================================
+function expandMap() {{
+  if (!isMobile) return;
+  const wrap = document.getElementById('map-wrap');
+  const btn = document.getElementById('mapCloseBtn');
+  wrap.classList.add('map-expanded');
+  btn.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {{ map.invalidateSize(); }}, 100);
+  setTimeout(() => {{ map.invalidateSize(); }}, 400);
+}}
+
+function collapseMap() {{
+  const wrap = document.getElementById('map-wrap');
+  const btn = document.getElementById('mapCloseBtn');
+  wrap.classList.remove('map-expanded');
+  btn.classList.remove('visible');
+  document.body.style.overflow = '';
+  setTimeout(() => {{ map.invalidateSize(); }}, 100);
+}}
+
 function addResultMarker(station) {{
   const pulse = L.divIcon({{
     className: '',
@@ -1397,20 +1432,31 @@ function addResultMarker(station) {{
 let flickerInterval = null;
 let flickerHighlighted = [];
 
+function restoreMarkerStyle(name) {{
+  const m = markerLayers[name];
+  if (!m) return;
+  const s = candidates.find(c => c.name === name);
+  if (!s) return;
+  const region = CITY_TO_REGION[s.city] || '北部';
+  const rc = REGION_COLORS[region];
+  const active = activeRegions.has(region);
+  m.setStyle({{ fillColor: active ? rc.fill : '#334155', color: active ? rc.border : '#1e293b',
+    fillOpacity: active ? 0.7 : 0.15 }});
+  m.setRadius(active ? 5 : 3);
+}}
+
 function startMapFlicker() {{
   flickerInterval = setInterval(() => {{
     // reset previous
-    flickerHighlighted.forEach(name => {{
-      const m = markerLayers[name];
-      if (m) m.setStyle({{ fillColor: '#818cf8', color: '#6366f1', radius: 5, fillOpacity: 0.7 }});
-    }});
+    flickerHighlighted.forEach(name => restoreMarkerStyle(name));
     flickerHighlighted = [];
     // highlight 3 random candidates
     for (let i = 0; i < 3; i++) {{
       const s = candidates[Math.floor(Math.random() * candidates.length)];
       const m = markerLayers[s.name];
       if (m) {{
-        m.setStyle({{ fillColor: '#fbbf24', color: '#f59e0b', radius: 9, fillOpacity: 1 }});
+        m.setStyle({{ fillColor: '#fbbf24', color: '#f59e0b', fillOpacity: 1 }});
+        m.setRadius(9);
         flickerHighlighted.push(s.name);
       }}
     }}
@@ -1420,10 +1466,7 @@ function startMapFlicker() {{
 function stopMapFlicker() {{
   if (flickerInterval) clearInterval(flickerInterval);
   flickerInterval = null;
-  flickerHighlighted.forEach(name => {{
-    const m = markerLayers[name];
-    if (m) m.setStyle({{ fillColor: '#818cf8', color: '#6366f1', radius: 5, fillOpacity: 0.7 }});
-  }});
+  flickerHighlighted.forEach(name => restoreMarkerStyle(name));
   flickerHighlighted = [];
 }}
 
@@ -1594,6 +1637,9 @@ async function startDraw() {{
   // ---- COUNTDOWN ----
   await runCountdown();
 
+  // expand map on mobile for better animation view
+  expandMap();
+
   // ---- SEQUENTIAL ANIMATION ----
   let seq = 0;
   function animateOne() {{
@@ -1684,12 +1730,9 @@ async function startDraw() {{
             const bounds = L.latLngBounds(winners.map(w => [w.lat, w.lng]));
             map.flyToBounds(bounds.pad(0.3), {{ duration: 1.5 }});
           }}
-          // mobile: scroll to map
+          // mobile: map is already expanded, invalidate after flyTo
           if (isMobile) {{
-            setTimeout(() => {{
-              document.getElementById('map-wrap').scrollIntoView({{ behavior: 'smooth' }});
-              setTimeout(() => {{ map.invalidateSize(); }}, 600);
-            }}, 400);
+            setTimeout(() => {{ map.invalidateSize(); }}, 600);
           }}
           isSpinning = false;
           btnDraw.disabled = false;
