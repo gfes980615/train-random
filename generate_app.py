@@ -829,6 +829,33 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 @keyframes quoteFade{{0%{{opacity:0;transform:translateY(6px)}}
   100%{{opacity:1;transform:translateY(0)}}}}
 
+/* ---------- floating reveal overlay ---------- */
+.reveal-overlay{{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9500;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(15,23,42,.6);backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;transition:opacity .4s}}
+.reveal-overlay.active{{opacity:1;pointer-events:auto}}
+.reveal-card{{max-width:360px;width:90%;padding:32px 28px;border-radius:20px;
+  background:linear-gradient(145deg,#1e293b 0%,#1a1f35 100%);
+  border:1px solid rgba(56,189,248,.3);text-align:center;
+  box-shadow:0 0 60px rgba(56,189,248,.12),0 20px 60px rgba(0,0,0,.4);
+  transform:scale(0.85) translateY(20px);opacity:0;
+  transition:all .5s cubic-bezier(.34,1.56,.64,1)}}
+.reveal-overlay.active .reveal-card{{transform:scale(1) translateY(0);opacity:1}}
+.reveal-card .rv-line{{font-size:.7rem;color:#475569;text-transform:uppercase;
+  letter-spacing:3px;margin-bottom:12px}}
+.reveal-card .rv-name{{font-size:2.4rem;font-weight:900;
+  background:linear-gradient(135deg,#38bdf8,#818cf8,#f472b6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1.2}}
+.reveal-card .rv-meta{{font-size:.85rem;color:#94a3b8;margin-top:8px}}
+.reveal-card .rv-divider{{width:40px;height:2px;margin:16px auto;
+  background:linear-gradient(90deg,transparent,#38bdf8,transparent);border-radius:1px}}
+.reveal-card .rv-quote{{font-size:.88rem;color:#cbd5e1;font-style:italic;
+  line-height:1.6;opacity:0;animation:quoteFade .8s .5s ease forwards}}
+.reveal-card .rv-tap{{font-size:.65rem;color:#475569;margin-top:20px;
+  letter-spacing:1px}}
+
 /* info panel (food & sight) */
 .info-panel{{width:100%;display:none;gap:10px;max-height:260px;overflow-y:auto;
   padding:2px 0;scrollbar-width:thin;scrollbar-color:#334155 transparent}}
@@ -948,14 +975,15 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 .marker-pulse{{position:absolute;width:24px;height:24px;border-radius:50%;
   background:rgba(56,189,248,.5);animation:pulse 1.5s ease-out infinite}}
 
-/* sparkles (gentle floating) */
+/* sparkles (warm floating) */
 @keyframes sparkle-drift{{
   0%{{transform:translateY(0) scale(0);opacity:0}}
-  20%{{opacity:.8;transform:translateY(-30px) scale(1)}}
-  80%{{opacity:.4}}
-  100%{{transform:translateY(-120px) scale(0.3);opacity:0}}
+  15%{{opacity:1;transform:translateY(-20px) scale(1.2)}}
+  40%{{opacity:.8;transform:translateY(-50px) scale(1)}}
+  100%{{transform:translateY(-140px) scale(0.2);opacity:0}}
 }}
 .sparkle{{position:absolute;border-radius:50%;
+  box-shadow:0 0 6px currentColor;
   animation:sparkle-drift 2.5s ease-out forwards;pointer-events:none;z-index:3}}
 
 /* ---------- countdown overlay ---------- */
@@ -982,13 +1010,14 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   transition:opacity .4s;pointer-events:none;font-style:italic}}
 .suspense-text.visible{{opacity:1}}
 
-/* ---------- screen flash (soft warm glow) ---------- */
+/* ---------- screen flash (warm bloom) ---------- */
 .screen-flash{{position:fixed;top:0;left:0;width:100%;height:100%;
   z-index:9998;pointer-events:none;opacity:0;
-  background:radial-gradient(circle,rgba(251,191,36,.18),transparent 70%)}}
-.screen-flash.flash{{animation:softGlow .8s ease-out forwards}}
-@keyframes softGlow{{
-  0%{{opacity:.8}}
+  background:radial-gradient(circle,rgba(251,191,36,.25),rgba(129,140,248,.08) 60%,transparent 80%)}}
+.screen-flash.flash{{animation:warmBloom 1.2s ease-out forwards}}
+@keyframes warmBloom{{
+  0%{{opacity:0}}
+  15%{{opacity:1}}
   100%{{opacity:0}}
 }}
 
@@ -1019,11 +1048,13 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 
 /* ---------- floating motes (ambient reveal) ---------- */
 @keyframes mote-rise{{
-  0%{{transform:translateY(20px) scale(0);opacity:0}}
-  30%{{opacity:.6;transform:translateY(0) scale(1)}}
-  100%{{transform:translateY(-80vh) scale(0.2);opacity:0}}
+  0%{{transform:translateY(0) scale(0);opacity:0}}
+  20%{{opacity:.7;transform:translateY(-10vh) scale(1.1)}}
+  50%{{opacity:.5}}
+  100%{{transform:translateY(-70vh) scale(0.15);opacity:0}}
 }}
 .mote{{position:fixed;z-index:9997;pointer-events:none;border-radius:50%;
+  box-shadow:0 0 8px currentColor;
   animation:mote-rise 4s ease-out forwards}}
 
 /* responsive */
@@ -1073,6 +1104,10 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   .count-row label{{font-size:.8rem}}
   .count-row select{{padding:5px 10px;font-size:.85rem}}
 
+  .reveal-card{{padding:24px 20px;max-width:300px}}
+  .reveal-card .rv-name{{font-size:2rem}}
+  .reveal-card .rv-quote{{font-size:.82rem}}
+
   .filter-tag{{padding:3px 8px;font-size:.65rem}}
   .filter-group-label{{font-size:.6rem}}
   .progress-wrap{{padding:0 16px}}
@@ -1093,6 +1128,10 @@ body{{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
 <div class="countdown-overlay" id="countdownOverlay"></div>
 <!-- screen flash -->
 <div class="screen-flash" id="screenFlash"></div>
+<!-- reveal overlay -->
+<div class="reveal-overlay" id="revealOverlay" onclick="dismissReveal()">
+  <div class="reveal-card" id="revealCard"></div>
+</div>
 <!-- conquer overlay -->
 <div class="conquer-overlay" id="conquerOverlay">
   <div class="conquer-title">&#127942; 恭喜全制霸！</div>
@@ -1276,21 +1315,27 @@ function playCountdownBeep(isGo) {{
 
 function playArrivalChime() {{
   ensureAudio();
-  // gentle two-note train arrival chime (like Japanese station melody)
-  const notes = [659, 523];
-  notes.forEach((freq, i) => {{
+  // warm 4-note station melody (pentatonic, like Japanese train jingle)
+  const melody = [
+    {{ freq: 523, delay: 0,    dur: 0.4 }},
+    {{ freq: 659, delay: 0.25, dur: 0.4 }},
+    {{ freq: 587, delay: 0.5,  dur: 0.4 }},
+    {{ freq: 784, delay: 0.8,  dur: 0.8 }},
+  ];
+  melody.forEach(n => {{
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
-    osc.frequency.value = freq;
-    const t = audioCtx.currentTime + i * 0.3;
+    osc.frequency.value = n.freq;
+    const t = audioCtx.currentTime + n.delay;
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.08, t + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+    gain.gain.linearRampToValueAtTime(0.1, t + 0.04);
+    gain.gain.setValueAtTime(0.1, t + n.dur * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + n.dur);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start(t);
-    osc.stop(t + 0.8);
+    osc.stop(t + n.dur);
   }});
 }}
 
@@ -1547,38 +1592,38 @@ function runCountdown() {{
 // ============================================================
 function spawnSparkles() {{
   const wrap = slotWindow;
-  const colors = ['#fbbf24','#fde68a','#fef3c7','#38bdf8','#818cf8'];
-  for (let i = 0; i < 15; i++) {{
+  const colors = ['#fbbf24','#fde68a','#fef3c7','#38bdf8','#818cf8','#f472b6'];
+  for (let i = 0; i < 25; i++) {{
     const s = document.createElement('div');
     s.className = 'sparkle';
-    s.style.left = (20 + Math.random() * 60) + '%';
-    s.style.bottom = (10 + Math.random() * 30) + '%';
+    s.style.left = (10 + Math.random() * 80) + '%';
+    s.style.bottom = (5 + Math.random() * 40) + '%';
     s.style.background = colors[Math.floor(Math.random() * colors.length)];
-    s.style.animationDelay = (Math.random() * 0.8) + 's';
-    s.style.animationDuration = (2 + Math.random() * 1) + 's';
-    const size = 3 + Math.random() * 5;
+    s.style.animationDelay = (Math.random() * 1.2) + 's';
+    s.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    const size = 3 + Math.random() * 6;
     s.style.width = size + 'px';
     s.style.height = size + 'px';
     wrap.appendChild(s);
-    setTimeout(() => s.remove(), 4000);
+    setTimeout(() => s.remove(), 5000);
   }}
 }}
 
 function spawnMotes() {{
-  const colors = ['#fbbf24','#fde68a','#38bdf8','#818cf8','#34d399'];
-  for (let i = 0; i < 20; i++) {{
+  const colors = ['#fbbf24','#fde68a','#38bdf8','#818cf8','#34d399','#f472b6','#e879f9'];
+  for (let i = 0; i < 35; i++) {{
     const m = document.createElement('div');
     m.className = 'mote';
-    const size = 3 + Math.random() * 6;
+    const size = 3 + Math.random() * 8;
     m.style.width = size + 'px';
     m.style.height = size + 'px';
-    m.style.left = (10 + Math.random() * 80) + 'vw';
-    m.style.bottom = '0';
+    m.style.left = (5 + Math.random() * 90) + 'vw';
+    m.style.bottom = (Math.random() * 20) + 'vh';
     m.style.background = colors[Math.floor(Math.random() * colors.length)];
-    m.style.animationDelay = (Math.random() * 1.5) + 's';
-    m.style.animationDuration = (3 + Math.random() * 2) + 's';
+    m.style.animationDelay = (Math.random() * 2) + 's';
+    m.style.animationDuration = (2.5 + Math.random() * 2.5) + 's';
     document.body.appendChild(m);
-    setTimeout(() => m.remove(), 6000);
+    setTimeout(() => m.remove(), 7000);
   }}
 }}
 
@@ -1702,16 +1747,20 @@ async function startDraw() {{
         stopSuspenseText();
         stopMapFlicker();
 
-        // gentle reveal
+        // reveal effects
         playArrivalChime();
         triggerScreenFlash();
         spawnSparkles();
         spawnMotes();
 
-        // show on map
-        addResultMarker(winner);
+        // show floating reveal card
+        showRevealOverlay(winner);
 
-        // update result card with animation
+        // show on map (behind the overlay)
+        addResultMarker(winner);
+        map.flyTo([winner.lat, winner.lng], 13, {{ duration: 1.8 }});
+
+        // update result card (visible after overlay dismisses)
         showResult(winners.slice(0, seq + 1));
         showStationInfo(winners.slice(0, seq + 1));
         resultCard.classList.remove('reveal-anim');
@@ -1728,15 +1777,8 @@ async function startDraw() {{
 
         seq++;
         if (seq < winners.length) {{
-          setTimeout(animateOne, 1800);
+          setTimeout(animateOne, 3500);
         }} else {{
-          // all done — fly map
-          if (winners.length === 1) {{
-            map.flyTo([winner.lat, winner.lng], 13, {{ duration: 1.5 }});
-          }} else {{
-            const bounds = L.latLngBounds(winners.map(w => [w.lat, w.lng]));
-            map.flyToBounds(bounds.pad(0.3), {{ duration: 1.5 }});
-          }}
           // mobile: map is already expanded, invalidate after flyTo
           if (isMobile) {{
             setTimeout(() => {{ map.invalidateSize(); }}, 600);
@@ -1752,6 +1794,38 @@ async function startDraw() {{
   }}
 
   animateOne();
+}}
+
+// ============================================================
+// Floating Reveal Overlay
+// ============================================================
+let revealTimeout = null;
+
+function showRevealOverlay(winner) {{
+  const overlay = document.getElementById('revealOverlay');
+  const card = document.getElementById('revealCard');
+  const quote = stationQuotes[winner.name] || '';
+  const region = CITY_TO_REGION[winner.city] || '北部';
+  const rc = REGION_COLORS[region];
+
+  card.innerHTML =
+    '<div class="rv-line">下一站</div>' +
+    '<div class="rv-name">' + winner.name + '</div>' +
+    '<div class="rv-meta">' + winner.city + ' \u00b7 ' + winner.line + '</div>' +
+    (quote ? '<div class="rv-divider"></div><div class="rv-quote">\u300c' + quote + '\u300d</div>' : '') +
+    '<div class="rv-tap">點擊任意處繼續</div>';
+
+  card.style.borderColor = rc.fill;
+  card.style.boxShadow = '0 0 60px ' + rc.fill + '20,0 20px 60px rgba(0,0,0,.4)';
+  overlay.classList.add('active');
+
+  if (revealTimeout) clearTimeout(revealTimeout);
+  revealTimeout = setTimeout(dismissReveal, 5000);
+}}
+
+function dismissReveal() {{
+  if (revealTimeout) {{ clearTimeout(revealTimeout); revealTimeout = null; }}
+  document.getElementById('revealOverlay').classList.remove('active');
 }}
 
 function showResult(winners) {{
